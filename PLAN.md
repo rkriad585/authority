@@ -660,21 +660,21 @@ Authority offers features **no other framework-agnostic Python auth library has:
 - [ ] Recovery code hashing + one-time use enforcement
 - [ ] Tests for all MFA methods
 
-### Phase 4: Advanced Features — [ ] Pending
+### Phase 4: Advanced Features — [x] Complete
 
-- [ ] `core.py` — WebAuthn registration/auth flows
-- [ ] `core.py` — RBAC CRUD + permission resolution
-- [ ] `core.py` — API key CRUD + verification
-- [ ] `core.py` — Audit log queries
-- [ ] `core.py` — Profile CRUD
-- [ ] Tests for all Phase 4 features
+- [x] `core.py` — WebAuthn registration/auth flows
+- [x] `core.py` — RBAC CRUD + permission resolution
+- [x] `core.py` — API key CRUD + verification
+- [x] `core.py` — Audit log queries
+- [x] `core.py` — Profile CRUD
+- [x] Tests for all Phase 4 features
 
-### Phase 5: Async — [ ] Pending
+### Phase 5: Async — [x] Complete
 
-- [ ] `storage/aiosqlite.py` — full AsyncStorageInterface implementation
-- [ ] `async_core.py` — AsyncAuthManager (mirror of sync)
-- [ ] Async event bus support
-- [ ] Tests for all async modules
+- [x] `storage/aiosqlite.py` — full AsyncStorageInterface implementation
+- [x] `async_core.py` — AsyncAuthManager (mirror of sync)
+- [x] Async event bus support
+- [x] Tests for all async modules
 
 ### Phase 6: Polish — [ ] Pending
 

@@ -1,0 +1,111 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "authority-auth"
+version = "0.1.0"
+description = "Comprehensive, framework-agnostic Python authentication library with JWT, MFA, WebAuthn, RBAC, API Keys, and pluggable storage."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [
+  { name = "rkriad585", email = "rkriad585@gmail.com" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Security",
+    "Topic :: Security :: Cryptography",
+    "Framework :: AsyncIO",
+]
+keywords = [
+    "authentication", "authorization", "jwt", "mfa", "rbac",
+    "webauthn", "passkeys", "security", "sqlite", "asyncio",
+]
+dependencies = [
+    "bcrypt>=4.1,<5",
+    "PyJWT>=2.8,<3",
+    "pyotp>=2.9,<3",
+    "cryptography>=44.0",
+    "webauthn>=2.7,<4",
+    "httpx>=0.27,<1",
+]
+
+[project.optional-dependencies]
+async = ["aiosqlite>=0.20,<1"]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "pytest-asyncio>=0.24",
+    "hypothesis>=6.100",
+    "ruff>=0.6",
+    "pyright>=1.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/rkriad585/authority"
+Repository = "https://github.com/rkriad585/authority"
+Issues = "https://github.com/rkriad585/authority/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/authority"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "S", "B", "A", "C4", "SIM", "TCH"]
+ignore = [
+    "S101",    # Allow assert in tests
+    "S105",    # False positives for config defaults
+    "S106",    # False positives for test fixtures and config
+    "A001",    # PermissionError shadows builtin — intentional
+    "A004",    # PermissionError shadows builtin — intentional
+    "S324",    # SHA1 required by HIBP API k-anonymity spec
+    "S608",    # False positive — field names are regex-validated
+    "E501",    # Line length — SQL strings are naturally long
+    "TC001",   # Import sorting for type-checking blocks
+    "TC003",   # Type-checking blocks not needed with future annotations
+    "SIM105",  # contextlib.suppress is less readable in tests
+    "F841",    # Local variable assigned but unused (webauthn try-except blocks)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["authority"]
+
+[tool.pyright]
+pythonVersion = "3.10"
+typeCheckingMode = "standard"
+include = ["src"]
+stubPath = "stubs"
+reportMissingTypeStubs = false
+reportMissingImports = false
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q --strict-markers"
+markers = [
+    "network: tests that make real HTTP requests (deselect with '-m not network')",
+]
+testpaths = ["tests"]
+pythonpath = ["src"]
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["authority"]
+omit = ["src/authority/storage/base.py"]
+
+[tool.coverage.report]
+fail_under = 83
+show_missing = true
