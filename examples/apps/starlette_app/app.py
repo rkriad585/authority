@@ -3,11 +3,7 @@
 Run from the repository root with:
 
     pip install uvicorn
-    uvicorn examples.apps.starlette_app:app
-
-or, if you already have uvicorn:
-
-    uvicorn examples.apps.starlette_app:app
+    uvicorn examples.apps.starlette_app.app:app
 
 The demo admin account is seeded on startup:
 
@@ -29,7 +25,7 @@ from authority.exceptions import InvalidCredentialsError, UserExistsError
 from authority.starlette import StarletteAuth
 from authority.storage.aiosqlite import AsyncSQLiteStorage
 
-from ._common import default_config, seed_demo_async
+from .._common import default_config, seed_demo_async
 
 if TYPE_CHECKING:
     from starlette.requests import Request

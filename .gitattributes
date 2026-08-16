@@ -1,0 +1,33 @@
+# Source files
+*.py text eol=lf diff=python
+*.pyi text eol=lf
+*.pyx text eol=lf
+
+# Docs
+*.md text eol=lf diff=markdown
+*.rst text eol=lf
+*.svg text eol=lf
+*.png binary
+*.gif binary
+*.jpg binary
+*.ico binary
+
+# Config
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.json text eol=lf
+*.ini text eol=lf
+*.cfg text eol=lf
+
+# Line endings / binary
+*.sh text eol=lf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.db binary
+*.sqlite binary
+*.sqlite3 binary
+
+# VCS hygiene
+LICENSE text eol=lf
+CHANGELOG.md text eol=lf

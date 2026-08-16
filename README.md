@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="https://raw.githubusercontent.com/rkriad585/authority/main/logo/logo.svg" alt="Authority logo" width="140">
+
 # Authority
 
 **Comprehensive, framework-agnostic Python authentication library**
@@ -7,29 +9,58 @@
 [![PyPI version](https://img.shields.io/pypi/v/authority-auth?color=blue)](https://pypi.org/project/authority-auth/)
 [![Python versions](https://img.shields.io/pypi/pyversions/authority-auth)](https://pypi.org/project/authority-auth/)
 [![License: MIT](https://img.shields.io/pypi/l/authority-auth)](https://github.com/rkriad585/authority/blob/main/LICENSE)
+[![Build status](https://img.shields.io/github/actions/workflow/status/rkriad585/authority/ci.yml)](https://github.com/rkriad585/authority/actions/workflows/ci.yml)
+[![Made by rkriad585](https://img.shields.io/badge/made_by-rkriad585-blue)](https://github.com/rkriad585)
+
+</div>
 
 A batteries-included authentication and authorization library for Python.
 JWT access tokens with refresh rotation, TOTP MFA with recovery codes,
 WebAuthn/passkey support, RBAC, API key management, password security with
-HIBP breach checking, and pluggable storage -- all framework-agnostic.
+HIBP breach checking, and pluggable storage — all framework-agnostic.
 
-</div>
+<p align="center">
+  <a href="https://raw.githubusercontent.com/rkriad585/authority/main/Screenshots/home.png">
+    <img src="https://raw.githubusercontent.com/rkriad585/authority/main/Screenshots/home.png" alt="Authority terminal-style screenshot" width="720">
+  </a>
+  <br>
+  <sub>More screenshots in <a href="docs/screenshots.md">docs/screenshots.md</a></sub>
+</p>
 
----
+## Table of Contents
+
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Async Usage](#async-usage)
+- [Framework Integrations](#framework-integrations)
+- [MFA Setup](#mfa-setup)
+- [RBAC](#rbac)
+- [API Keys](#api-keys)
+- [Event System](#event-system)
+- [Configuration](#configuration)
+- [Interface](#interface)
+- [Architecture](#architecture)
+- [Documentation](#documentation)
+- [Development](#development)
+- [Contributing](#contributing)
+- [Security](#security)
+- [License](#license)
 
 ## Features
 
-- **JWT Authentication** -- Access tokens (HS256) with short-lived expiry and opaque refresh tokens with rotation, family tracking, and reuse detection
-- **TOTP MFA** -- Time-based one-time passwords with Fernet-encrypted secrets and single-use recovery codes
-- **WebAuthn / Passkeys** -- Registration and authentication via the WebAuthn standard
-- **RBAC** -- Role-based access control with granular permissions
-- **API Keys** -- Prefix-based lookup, scoped keys with optional expiry
-- **Password Security** -- Configurable complexity rules, password history enforcement, and HIBP breach checking via k-anonymity
-- **Pluggable Storage** -- Sync and async SQLite backends included; implement `StorageInterface` or `AsyncStorageInterface` for any database
-- **Event Bus** -- Typed lifecycle events (login, MFA, token refresh, RBAC changes, etc.) with sync and async handler support
-- **Audit Logging** -- Append-only audit trail with optional chain hashing for tamper evidence
-- **Framework-Agnostic** -- First-party integrations for FastAPI, Flask, Django, and Starlette, plus generic ASGI/WSGI middleware for everything else
-- **Full Async Support** -- `AsyncAuthManager` with `AsyncSQLiteStorage` for async-first applications
+- **JWT Authentication** — Access tokens (HS256) with short-lived expiry and opaque refresh tokens with rotation, family tracking, and reuse detection
+- **TOTP MFA** — Time-based one-time passwords with Fernet-encrypted secrets and single-use recovery codes
+- **WebAuthn / Passkeys** — Registration and authentication via the WebAuthn standard
+- **RBAC** — Role-based access control with granular permissions
+- **API Keys** — Prefix-based lookup, scoped keys with optional expiry
+- **Password Security** — Configurable complexity rules, password history enforcement, and HIBP breach checking via k-anonymity
+- **Pluggable Storage** — Sync and async SQLite backends included; implement `StorageInterface` or `AsyncStorageInterface` for any database
+- **Event Bus** — Typed lifecycle events (login, MFA, token refresh, RBAC changes, audit, etc.) with sync and async handler support
+- **Audit Logging** — Append-only audit trail with optional chain hashing for tamper evidence
+- **Framework-Agnostic** — First-party integrations for FastAPI, Flask, Django, and Starlette, plus generic ASGI/WSGI middleware for everything else
+- **Full Async Support** — `AsyncAuthManager` with `AsyncSQLiteStorage` for async-first applications
 
 ## Requirements
 
@@ -42,16 +73,22 @@ HIBP breach checking, and pluggable storage -- all framework-agnostic.
 pip install authority-auth
 ```
 
-For async SQLite storage support:
+Optional extras:
+
+| Extra | Provides |
+|---|---|
+| `async` | `aiosqlite`-backed `AsyncSQLiteStorage` |
+| `fastapi` | FastAPI integration (`authority.fastapi`) |
+| `flask` | Flask integration (`authority.flask`) |
+| `django` | Django integration (`authority.django`) |
+| `starlette` | Starlette integration (`authority.starlette`) |
+| `quart` | Quart is supported through the ASGI middleware |
+| `dev` | Development tooling (pytest, ruff, pyright, test frameworks) |
+| `docs` | MkDocs + Material for building the documentation site |
 
 ```bash
 pip install "authority-auth[async]"
-```
-
-For development:
-
-```bash
-pip install "authority-auth[dev]"
+pip install "authority-auth[fastapi,flask]"
 ```
 
 ## Quick Start
@@ -150,24 +187,30 @@ async def main():
 asyncio.run(main())
 ```
 
-## FastAPI Integration
+## Framework Integrations
+
+Each integration ships in its own module and requires the matching framework
+extra. Fully working apps for every framework live in
+[`examples/apps/`](examples/apps/) — see the
+[examples documentation](docs/examples/index.md) for run instructions,
+endpoints, and the demo account.
+
+```bash
+pip install "authority-auth[flask]"    # Flask
+pip install "authority-auth[django]"   # Django
+pip install "authority-auth[starlette]"  # Starlette
+pip install "authority-auth[fastapi]"  # FastAPI
+```
+
+### FastAPI
 
 ```python
-from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import FastAPI, Depends
 from authority import AuthConfig, AsyncAuthManager
 from authority.storage import AsyncSQLiteStorage
-from authority.exceptions import (
-    InvalidCredentialsError,
-    TokenExpiredError,
-    InvalidTokenError,
-    MFAFailedError,
-    UserExistsError,
-    ValidationError,
-)
+from authority.fastapi import get_current_user, init_auth
 
 app = FastAPI()
-security = HTTPBearer()
 
 config = AuthConfig(
     jwt_secret_key="your-secret-key-min-32-chars",
@@ -175,6 +218,7 @@ config = AuthConfig(
 )
 storage = AsyncSQLiteStorage("auth.db")
 auth = AsyncAuthManager(config, storage)
+init_auth(auth)
 
 
 @app.on_event("startup")
@@ -187,62 +231,9 @@ async def shutdown():
     await auth.close()
 
 
-async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-) -> dict:
-    try:
-        payload = await auth.verify_access_token(credentials.credentials)
-        user = await auth.get_user(payload["user_id"])
-        return user
-    except (InvalidTokenError, TokenExpiredError):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token",
-        )
-
-
-@app.post("/register")
-async def register(name: str, email: str, password: str):
-    try:
-        user = await auth.register(name, email, password, auto_verify=True)
-        return {"user_id": user["id"], "email": user["email"]}
-    except UserExistsError:
-        raise HTTPException(status_code=409, detail="Email already registered")
-    except ValidationError as e:
-        raise HTTPException(status_code=422, detail=str(e))
-
-
-@app.post("/login")
-async def login(email: str, password: str):
-    try:
-        result = await auth.login(email=email, password=password)
-        if result.get("mfa_required"):
-            return {"mfa_required": True, "user_id": result["user_id"]}
-        return {
-            "access_token": result["access_token"],
-            "refresh_token": result["refresh_token"],
-            "token_type": "Bearer",
-        }
-    except InvalidCredentialsError:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
-
 @app.get("/me")
-async def get_me(user: dict = Depends(get_current_user)):
+async def me(user: dict = Depends(get_current_user)):
     return {"id": user["id"], "name": user["name"], "email": user["email"]}
-```
-
-## Framework Integrations
-
-Each integration ships in its own module and requires the matching framework
-extra. Fully working apps for every framework live in
-[`examples/apps/`](examples/apps/).
-
-```bash
-pip install "authority-auth[flask]"    # Flask
-pip install "authority-auth[django]"   # Django
-pip install "authority-auth[starlette]"  # Starlette
-pip install "authority-auth[fastapi]"  # FastAPI
 ```
 
 ### Flask
@@ -345,40 +336,6 @@ app = AuthorityWSGIMiddleware(inner_app, manager, auth_required=True)
 
 With `auth_required=True` unauthenticated requests are rejected with a 401 JSON
 response before reaching the application.
-
-## Configuration
-
-`AuthConfig` accepts values via constructor arguments, environment variables (prefixed with `AUTHORITY_`), or defaults. Constructor kwargs take highest priority.
-
-| Parameter | Env Var | Default | Description |
-|---|---|---|---|
-| `jwt_secret_key` | `AUTHORITY_JWT_SECRET_KEY` | `""` | **Required.** Secret key for signing JWTs |
-| `fernet_key` | `AUTHORITY_FERNET_KEY` | `""` | **Required.** Fernet key for encrypting MFA secrets |
-| `db_path` | `AUTHORITY_DB_PATH` | `"authority_data.db"` | Path to the SQLite database file |
-| `jwt_algorithm` | -- | `"HS256"` | JWT signing algorithm |
-| `jwt_access_token_expiry_minutes` | -- | `15` | Access token lifetime in minutes |
-| `jwt_refresh_token_expiry_days` | -- | `7` | Refresh token lifetime in days |
-| `jwt_refresh_token_absolute_max_days` | -- | `30` | Maximum refresh token age regardless of rotation |
-| `password_min_length` | -- | `12` | Minimum password length |
-| `password_history_depth` | -- | `5` | Number of previous passwords to remember |
-| `password_require_complexity` | -- | `True` | Enforce complexity regex |
-| `hibp_check_enabled` | -- | `False` | Check passwords against HIBP breach database |
-| `hibp_api_key` | `AUTHORITY_HIBP_KEY` | `""` | Optional HIBP API key |
-| `hibp_failure_mode` | -- | `"warn"` | `"reject"`, `"warn"`, or `"ignore"` |
-| `failed_login_lockout_threshold` | -- | `5` | Failed attempts before lockout |
-| `failed_login_lockout_minutes` | -- | `15` | Lockout duration in minutes |
-| `email_verification_required` | -- | `True` | Require email verification on signup |
-| `mfa_issuer_name` | -- | `"Authority Powered App"` | Issuer name shown in authenticator apps |
-| `mfa_recovery_code_count` | -- | `10` | Number of recovery codes generated |
-| `mfa_totp_valid_window` | -- | `1` | TOTP valid window (+-1 step = 30s each) |
-| `refresh_token_rotate` | -- | `True` | Rotate refresh tokens on use |
-| `refresh_token_reuse_grace_seconds` | -- | `10` | Grace period for legitimate refresh retries |
-| `webauthn_rp_id` | `AUTHORITY_WEBAUTHN_RP_ID` | `""` | WebAuthn relying party ID |
-| `webauthn_rp_name` | -- | `"My Application"` | WebAuthn relying party name |
-| `webauthn_expected_origin` | `AUTHORITY_WEBAUTHN_ORIGIN` | `""` | Expected origin for WebAuthn |
-| `audit_log_enabled` | -- | `True` | Enable audit logging |
-| `default_user_role` | -- | `"user"` | Default role assigned to new users |
-| `api_key_byte_length` | -- | `32` | Byte length of generated API keys |
 
 ## MFA Setup
 
@@ -496,35 +453,296 @@ bus.on(Event.USER_REGISTERED, on_register)
 
 # Pass the event bus when creating the manager
 auth = AuthManager(config, storage, event_bus=bus)
-
-# Supported events:
-#   USER_REGISTERED, USER_LOGIN_SUCCESS, USER_LOGIN_FAILED, USER_LOGOUT
-#   USER_PASSWORD_CHANGED, USER_PASSWORD_RESET, USER_EMAIL_CHANGED, USER_DELETED
-#   MFA_SETUP_INITIATED, MFA_ENABLED, MFA_DISABLED, MFA_FAILED
-#   TOKEN_REFRESHED, TOKEN_REUSE_DETECTED
-#   WEBAUTHN_CREDENTIAL_ADDED, WEBAUTHN_CREDENTIAL_REMOVED
-#   RBAC_ROLE_ASSIGNED, RBAC_ROLE_REVOKED
-#   API_KEY_CREATED, API_KEY_REVOKED
 ```
 
-## Storage
+All 22 event types:
 
-Authority ships with SQLite backends. For other databases, implement `StorageInterface` (sync) or `AsyncStorageInterface` (async):
+| Event | Payload summary |
+|---|---|
+| `USER_REGISTERED` | new user |
+| `USER_LOGIN_SUCCESS` | user id, IP, user agent |
+| `USER_LOGIN_FAILED` | email, reason |
+| `USER_LOGOUT` | user id |
+| `USER_PASSWORD_CHANGED` | user id |
+| `USER_PASSWORD_RESET` | user id, email |
+| `USER_EMAIL_CHANGED` | user id |
+| `USER_DELETED` | user id |
+| `MFA_SETUP_INITIATED` | user id |
+| `MFA_ENABLED` | user id |
+| `MFA_DISABLED` | user id |
+| `MFA_FAILED` | user id, reason |
+| `TOKEN_REFRESHED` | user id, token family |
+| `TOKEN_REUSE_DETECTED` | user id, token family |
+| `TOKEN_REVOKED` | user id |
+| `WEBAUTHN_CREDENTIAL_ADDED` | user id |
+| `WEBAUTHN_CREDENTIAL_REMOVED` | user id |
+| `RBAC_ROLE_ASSIGNED` | user id, role |
+| `RBAC_ROLE_REVOKED` | user id, role |
+| `API_KEY_CREATED` | user id |
+| `API_KEY_REVOKED` | user id |
+| `AUDIT_EVENT_LOGGED` | audit entry |
 
-```python
-from authority.storage.base import StorageInterface
+## Configuration
 
-class PostgresStorage(StorageInterface):
-    def get_user_by_id(self, user_id: int) -> dict | None:
-        # Your implementation here
-        ...
+`AuthConfig` accepts values via constructor arguments, environment variables
+(prefixed with `AUTHORITY_`), or defaults. Constructor kwargs take highest
+priority.
 
-    # Implement all abstract methods ...
+| Parameter | Env Var | Default | Description |
+|---|---|---|---|
+| `db_path` | `AUTHORITY_DB_PATH` | `"authority_data.db"` | Path to the SQLite database file |
+| `prune_tokens_on_startup` | -- | `True` | Prune expired tokens when the manager opens |
+| `jwt_secret_key` | `AUTHORITY_JWT_SECRET_KEY` | `""` | **Required.** Secret key for signing JWTs |
+| `fernet_key` | `AUTHORITY_FERNET_KEY` | `""` | **Required.** Fernet key for encrypting MFA secrets |
+| `jwt_algorithm` | -- | `"HS256"` | JWT signing algorithm |
+| `jwt_access_token_expiry_minutes` | -- | `15` | Access token lifetime in minutes |
+| `jwt_refresh_token_expiry_days` | -- | `7` | Refresh token lifetime in days |
+| `jwt_refresh_token_absolute_max_days` | -- | `30` | Maximum refresh token age regardless of rotation |
+| `password_min_length` | -- | `12` | Minimum password length |
+| `password_history_depth` | -- | `5` | Number of previous passwords to remember |
+| `password_require_complexity` | -- | `True` | Enforce complexity regex |
+| `password_complexity_regex` | -- | see below | Regex used for complexity checks |
+| `password_prevent_email_username_use` | -- | `True` | Reject passwords containing the email or username |
+| `hibp_check_enabled` | -- | `False` | Check passwords against HIBP breach database |
+| `hibp_api_key` | `AUTHORITY_HIBP_KEY` | `""` | Optional HIBP API key |
+| `hibp_failure_mode` | -- | `"warn"` | `"reject"`, `"warn"`, or `"ignore"` |
+| `failed_login_lockout_threshold` | -- | `5` | Failed attempts before lockout |
+| `failed_login_lockout_minutes` | -- | `15` | Lockout duration in minutes |
+| `email_verification_required` | -- | `True` | Require email verification on signup |
+| `verification_token_expiry_minutes` | -- | `1440` | Email verification token lifetime |
+| `password_reset_token_expiry_minutes` | -- | `30` | Password reset token lifetime |
+| `email_change_token_expiry_minutes` | -- | `60` | Email change token lifetime |
+| `mfa_issuer_name` | -- | `"Authority Powered App"` | Issuer name shown in authenticator apps |
+| `mfa_recovery_code_count` | -- | `10` | Number of recovery codes generated |
+| `mfa_totp_valid_window` | -- | `1` | TOTP valid window (±1 step = 30s each) |
+| `refresh_token_rotate` | -- | `True` | Rotate refresh tokens on use |
+| `refresh_token_reuse_grace_seconds` | -- | `10` | Grace period for legitimate refresh retries |
+| `webauthn_rp_id` | `AUTHORITY_WEBAUTHN_RP_ID` | `""` | WebAuthn relying party ID |
+| `webauthn_rp_name` | -- | `"My Application"` | WebAuthn relying party name |
+| `webauthn_expected_origin` | `AUTHORITY_WEBAUTHN_ORIGIN` | `""` | Expected origin for WebAuthn |
+| `webauthn_timeout_ms` | -- | `60000` | WebAuthn ceremony timeout |
+| `audit_log_enabled` | -- | `True` | Enable audit logging |
+| `default_user_role` | -- | `"user"` | Default role assigned to new users |
+| `api_key_byte_length` | -- | `32` | Byte length of generated API keys |
+
+The default complexity regex is
+`^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{12,}$` — at least 12 characters
+containing lowercase, uppercase, a digit, and a special character.
+
+## Interface
+
+Authority exposes a small, stable public API surface.
+
+### Core managers
+
+- `AuthManager` (`authority.core`) — synchronous manager. Construct with
+  `AuthManager(config, storage, event_bus=None)`; open with `.open()`, close
+  with `.close()`.
+- `AsyncAuthManager` (`authority.async_core`) — asyncio-native equivalent with
+  the same 55-method surface as coroutines.
+
+Both expose methods grouped by concern:
+
+- **Users** — `register`, `get_user`, `get_profile`, `update_user`,
+  `update_profile`, `delete_user`, `request_email_verification`, `verify_email`,
+  `request_email_change`, `confirm_email_change`, `request_password_reset`,
+  `reset_password`, `change_password`
+- **Authentication** — `login`, `logout`, `logout_all`,
+  `verify_access_token`, `refresh_access_token`, `require_permission`
+- **Sessions** — `list_sessions`, `revoke_session_by_id`,
+  `revoke_all_sessions_for_user`
+- **MFA** — `setup_mfa`, `verify_and_enable_mfa`, `get_mfa_status`,
+  `disable_mfa`, `verify_mfa_login`, `verify_mfa_recovery_code`,
+  `regenerate_recovery_codes`
+- **WebAuthn** — `start_webauthn_registration`, `complete_webauthn_registration`,
+  `start_webauthn_authentication`, `complete_webauthn_authentication`,
+  `list_webauthn_credentials`, `delete_webauthn_credential`
+- **RBAC** — `create_role`, `delete_role`, `list_roles`, `create_permission`,
+  `delete_permission`, `list_permissions`, `assign_permission_to_role`,
+  `remove_permission_from_role`, `get_role_permissions`, `assign_role_to_user`,
+  `remove_role_from_user`, `get_user_roles`, `has_permission`,
+  `get_user_permissions`
+- **API keys** — `create_api_key`, `verify_api_key`, `list_api_keys`,
+  `revoke_api_key`
+- **Audit** — `get_audit_log`
+
+See [docs/api.md](docs/api.md) for the complete reference.
+
+### Configuration
+
+- `AuthConfig` (`authority.config`) — dataclass of all knobs; see
+  [Configuration](#configuration).
+
+### Events
+
+- `Event` (`authority.events`) — enum of the 22 lifecycle events.
+- `EventBus` (`authority.events`) — `.on(event, handler)`, `.emit(event, data)`
+  with sync and async handler support.
+
+### Exceptions
+
+`AuthError` is the base of a 24-class hierarchy. Public exceptions include
+`ConfigurationError`, `DatabaseError`, `ValidationError`, `UserExistsError`,
+`UserNotFoundError`, `InvalidCredentialsError`, `AccountInactiveError`,
+`AccountNotVerifiedError`, `AccountLockedError`, `InvalidTokenError`,
+`TokenExpiredError`, `MFARequiredError`, `MFAFailedError`,
+`InvalidRecoveryCodeError`, `MFANotEnabledError`, `PasswordPwnedError`,
+`PermissionError`, `InsufficientPermissionsError`, `WebAuthnError`,
+`WebAuthnRegistrationError`, `WebAuthnVerificationError`,
+`InvalidAPIKeyError`, and `RateLimitExceededError`. All are importable from
+`authority`; see [docs/api.md](docs/api.md) for the full hierarchy.
+
+### Storage
+
+- `StorageInterface` (`authority.storage.base`) — abstract sync storage contract.
+- `AsyncStorageInterface` (`authority.storage.base`) — abstract async storage contract.
+- `SQLiteStorage` (`authority.storage.sqlite`) — sync SQLite implementation.
+- `AsyncSQLiteStorage` (`authority.storage.aiosqlite`) — async SQLite implementation.
+
+### Utils
+
+`generate_secure_token`, `hash_token`, `encrypt_data`, `decrypt_data`,
+`reset_fernet_cache`, `check_password_pwned`, `estimate_password_strength`,
+`validate_email_format` — all importable from `authority`.
+
+## Architecture
+
 ```
+┌────────────────────────────────────────────────────────────────────┐
+│                        Your Application                            │
+│                  routes / handlers / middlewares                   │
+└───────────────┬───────────────────────────────────┬────────────────┘
+                │                                   │
+                ▼                                   ▼
+  ┌──────────────────────────┐       ┌───────────────────────────┐
+  │    Framework Adapters     │       │   Generic Middleware      │
+  │  authority.fastapi        │       │   authority.asgi          │
+  │  authority.flask          │       │   authority.wsgi          │
+  │  authority.django         │       │  (any ASGI / WSGI app)    │
+  │  authority.starlette      │       └─────────────┬─────────────┘
+  └─────────────┬────────────┘                     │
+                │                                   │
+                └────────────────┬──────────────────┘
+                                 ▼
+                    ┌─────────────────────────┐
+                    │   authority.core        │
+                    │  AuthManager (sync)     │
+                    │  AsyncAuthManager       │
+                    │  AuthConfig             │
+                    │  EventBus / Event       │
+                    │  Exceptions             │
+                    └───────────┬─────────────┘
+                                │
+                     ┌──────────┴──────────┐
+                     ▼                     ▼
+        ┌──────────────────────┐  ┌───────────────────────┐
+        │ StorageInterface     │  │ AsyncStorageInterface │
+        │ SQLiteStorage (sync) │  │ AsyncSQLiteStorage    │
+        │   or your own        │  │   or your own         │
+        └──────────────────────┘  └───────────────────────┘
+```
+
+Mermaid equivalent:
+
+```mermaid
+flowchart LR
+    App[Your Application] --> Integrations
+    subgraph Integrations[Framework Integrations]
+        FastAPI["authority.fastapi"]
+        Flask["authority.flask"]
+        Django["authority.django"]
+        Starlette["authority.starlette"]
+        ASGI["authority.asgi"]
+        WSGI["authority.wsgi"]
+    end
+    subgraph Core[Core]
+        AM[AuthManager]
+        AAM[AsyncAuthManager]
+        Cfg[AuthConfig]
+        Events[EventBus / Event]
+        Exc[Exceptions]
+    end
+    subgraph Storage[Storage]
+        SI[StorageInterface]
+        ASI[AsyncStorageInterface]
+        SQL[SQLiteStorage]
+        ASQL[AsyncSQLiteStorage]
+    end
+    Integrations --> AM & AAM
+    Cfg --> AM & AAM
+    AM --> SQL & SI
+    AAM --> ASQL & ASI
+    AM -.emit.-> Events
+    AAM -.emit.-> Events
+    AM & AAM -.raise.-> Exc
+```
+
+## Documentation
+
+Full documentation is built with MkDocs Material and published to
+<https://rkriad585.github.io/authority/>.
+
+| Page | Description |
+|---|---|
+| [Home](docs/index.md) | Landing page with logo, overview, and quick links |
+| [Getting Started](docs/getting-started.md) | First steps with authority |
+| [Installation](docs/installation.md) | Install options and extras |
+| [Usage](docs/usage.md) | Sync & async usage, tokens, MFA, RBAC, API keys |
+| [Configuration](docs/configuration.md) | Every `AuthConfig` option and env var |
+| [API Reference](docs/api.md) | Full public API inventory |
+| [Architecture](docs/architecture.md) | Design overview and module map |
+| [Development](docs/development.md) | Setup, testing, linting, CI |
+| [Deployment](docs/deployment.md) | Production guidance |
+| [Screenshots](docs/screenshots.md) | All generated screenshots |
+| [FAQ](docs/faq.md) | Frequently asked questions |
+| [Troubleshooting](docs/troubleshooting.md) | Common issues and fixes |
+| [Examples](docs/examples/index.md) | All example applications |
+
+### Example applications
+
+| App | Stack | Docs |
+|---|---|---|
+| [Flask](examples/apps/flask_app/) | Flask + SQLite (sync) | [flask.md](docs/examples/flask.md) |
+| [Django](examples/apps/django_app/) | Django + SQLite (sync) | [django.md](docs/examples/django.md) |
+| [WSGI](examples/apps/wsgi_app/) | Bare WSGI + middleware (sync) | [wsgi.md](docs/examples/wsgi.md) |
+| [FastAPI](examples/apps/fastapi_app/) | FastAPI + aiosqlite (async) | [fastapi.md](docs/examples/fastapi.md) |
+| [Starlette](examples/apps/starlette_app/) | Starlette + aiosqlite (async) | [starlette.md](docs/examples/starlette.md) |
+| [ASGI](examples/apps/asgi_app/) | Bare ASGI + middleware (async) | [asgi.md](docs/examples/asgi.md) |
+
+## Development
+
+See [docs/development.md](docs/development.md) for the full guide.
+
+```bash
+git clone https://github.com/rkriad585/authority.git
+cd authority
+
+# Create a virtual environment
+python -m venv .venv
+.venv\Scripts\activate   # Windows
+# source .venv/bin/activate  # macOS / Linux
+
+# Install in editable mode with dev extras
+pip install -e ".[dev]"
+
+# Run the test suite
+pytest
+
+# Lint and type-check
+ruff check .
+pyright
+```
+
+## Contributing
+
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for
+guidelines, and note that this project adheres to a
+[Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Security
 
-See [SECURITY.md](SECURITY.md) for the full security policy, vulnerability reporting process, and security considerations.
+See [SECURITY.md](SECURITY.md) for the full security policy, vulnerability
+reporting process, and security considerations.
 
 Key security properties:
 
@@ -536,10 +754,6 @@ Key security properties:
 - HIBP integration uses k-anonymity (only SHA-1 prefix sent)
 - Audit log is append-only with chain hashing for tamper evidence
 
-## Contributing
-
-Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
 ## License
 
-[MIT](LICENSE) -- authority-auth (c) 2026 rkriad585.
+[MIT](LICENSE) — authority-auth (c) 2023 rkriad585.

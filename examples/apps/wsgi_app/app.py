@@ -5,7 +5,7 @@ This is a plain WSGI application (no framework) wrapped in
 
 Run from the repository root with:
 
-    python examples/apps/wsgi_app.py
+    python -m examples.apps.wsgi_app.app
 
 The demo admin account is seeded on startup:
 
@@ -28,7 +28,7 @@ from authority.wsgi import (
     user_id_from_environ,
 )
 
-from ._common import default_config, seed_demo_sync
+from .._common import default_config, seed_demo_sync
 
 DB_PATH = "wsgi_auth.db"
 

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-labelledby="title desc">
+  <title id="title">Authority</title>
+  <desc id="desc">A shield with a keyhole, representing the authority-auth authentication library.</desc>
+  <rect width="512" height="512" rx="112" fill="#4338CA"/>
+  <path
+    fill="#FFFFFF"
+    fill-rule="evenodd"
+    d="M256 88 L372 136 V256 C372 348 322 408 256 440 C190 408 140 348 140 256 V136 Z
+       M256 186 A52 52 0 1 0 256.001 186 Z
+       M236 324 L236 304 Q236 284 256 284 L256 284 Q276 284 276 304 L276 324 Q276 344 256 344 L256 344 Q236 344 236 324 Z"/>
+</svg>

@@ -6,11 +6,7 @@ This is a plain ASGI application (no framework) wrapped in
 Run from the repository root with:
 
     pip install uvicorn
-    uvicorn examples.apps.asgi_app:wrapped_app
-
-or, if you already have uvicorn:
-
-    uvicorn examples.apps.asgi_app:wrapped_app
+    uvicorn examples.apps.asgi_app.app:wrapped_app
 
 The demo admin account is seeded on startup:
 
@@ -34,7 +30,7 @@ from authority.async_core import AsyncAuthManager
 from authority.exceptions import InvalidCredentialsError, UserExistsError
 from authority.storage.aiosqlite import AsyncSQLiteStorage
 
-from ._common import default_config, seed_demo_async
+from .._common import default_config, seed_demo_async
 
 DB_PATH = "asgi_auth.db"
 

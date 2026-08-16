@@ -6,7 +6,7 @@ structure required).
 
 Run from the repository root with:
 
-    python examples/apps/django_app.py
+    python -m examples.apps.django_app.app
 
 The demo admin account is seeded on startup:
 
@@ -70,7 +70,7 @@ from authority.django import (  # noqa: E402
 from authority.exceptions import InvalidCredentialsError, UserExistsError  # noqa: E402
 from authority.storage.sqlite import SQLiteStorage  # noqa: E402
 
-from ._common import default_config, seed_demo_sync  # noqa: E402
+from .._common import default_config, seed_demo_sync  # noqa: E402
 
 DB_PATH = "django_auth.db"
 

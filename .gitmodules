@@ -1,0 +1,6 @@
+# This repository does not currently use submodules.
+# If one is added later, declare it here, e.g.:
+#
+# [submodule "third_party/some-lib"]
+#     path = third_party/some-lib
+#     url = https://github.com/user/some-lib.git

@@ -1,0 +1,16 @@
+/* Extra styling for the Authority documentation site. */
+
+.md-typeset img {
+    border-radius: 0.4rem;
+}
+
+.md-typeset h1 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.md-typeset h1 img {
+    max-width: 4.5rem;
+    max-height: 4.5rem;
+}

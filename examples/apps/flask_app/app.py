@@ -2,7 +2,7 @@
 
 Run from the repository root with:
 
-    python examples/apps/flask_app.py
+    python -m examples.apps.flask_app.app
 
 The demo admin account is seeded on first startup:
 
@@ -19,7 +19,7 @@ from authority.exceptions import InvalidCredentialsError, UserExistsError
 from authority.flask import FlaskAuth, current_user, init_auth
 from authority.storage.sqlite import SQLiteStorage
 
-from ._common import default_config, seed_demo_sync
+from .._common import default_config, seed_demo_sync
 
 DB_PATH = "flask_auth.db"
 

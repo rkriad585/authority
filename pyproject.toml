@@ -60,13 +60,19 @@ dev = [
     "starlette>=0.40,<2",
     "quart>=0.19,<2",
 ]
+docs = [
+    "mkdocs>=1.6",
+    "mkdocs-material>=9.5",
+    "pymdown-extensions>=10.7",
+]
 
 [project.urls]
 Homepage = "https://github.com/rkriad585/authority"
 Repository = "https://github.com/rkriad585/authority"
-Documentation = "https://github.com/rkriad585/authority#readme"
+Documentation = "https://rkriad585.github.io/authority/"
 Changelog = "https://github.com/rkriad585/authority/blob/main/CHANGELOG.md"
 Issues = "https://github.com/rkriad585/authority/issues"
+"Author Website" = "https://rkriad585.github.io"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/authority"]

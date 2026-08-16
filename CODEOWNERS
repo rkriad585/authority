@@ -1,0 +1,12 @@
+# Default owners for everything in the repo.
+# These owners will be requested for review when someone opens a pull request.
+
+* @rkriad585
+
+# Documentation site
+/docs @rkriad585
+/mkdocs.yml @rkriad585
+/README.md @rkriad585
+
+# CI workflows
+/.github/workflows @rkriad585
