@@ -462,7 +462,10 @@ class TestAccessToken:
     async def test_wrong_secret(
         self, auth_manager: AsyncAuthManager, verified_user: dict
     ):
-        token = _make_token("wrong-secret-key!!!", sub=str(verified_user["id"]))
+        token = _make_token(
+            "wrong-secret-key-that-is-long-enough-for-hmac!",
+            sub=str(verified_user["id"]),
+        )
         with pytest.raises(InvalidTokenError):
             await auth_manager.verify_access_token(token)
 
@@ -470,7 +473,7 @@ class TestAccessToken:
         self, auth_manager: AsyncAuthManager, verified_user: dict
     ):
         token = _make_token(
-            auth_manager.config.jwt_secret_key,
+            auth_manager.config.jwt_secret_key.ljust(64, "x"),
             sub=str(verified_user["id"]),
             algorithm="HS512",
         )

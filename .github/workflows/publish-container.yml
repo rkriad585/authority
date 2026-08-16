@@ -67,6 +67,7 @@ jobs:
 
       - name: Workflow summary
         run: |
+          TAGS="${{ steps.meta.outputs.tags }}"
           {
             echo "## Container published"
             echo ""
@@ -74,8 +75,8 @@ jobs:
             echo "- **Image:** \`ghcr.io/rkriad585/authority\`"
             echo "- **Project version:** \`${{ env.VERSION }}\`"
             echo "- **Tags:**"
-            for tag in ${{ steps.meta.outputs.tags }}; do
-              echo "  - \`$tag\`"
-            done
+            while IFS= read -r tag; do
+              [ -n "$tag" ] && echo "  - \`$tag\`"
+            done <<< "$TAGS"
             echo "- **Ref:** \`${{ github.ref }}\` at \`${{ github.sha }}\`"
           } >> "$GITHUB_STEP_SUMMARY"

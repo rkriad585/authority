@@ -59,6 +59,7 @@ dev = [
     "django>=5.0,<7",
     "starlette>=0.40,<2",
     "quart>=0.19,<2",
+    "httpx2>=2.0",
 ]
 docs = [
     "mkdocs>=1.6",
