@@ -426,3 +426,42 @@ class TestMFACodeFormats:
         code = pyotp.TOTP(secret).now()
         assert len(code) == 6
         assert code.isdigit()
+
+
+class TestVerifyRecoveryCode:
+    @pytest.fixture()
+    def mfa_enabled_user(self, auth_manager: AuthManager) -> dict:
+        """Register a user with MFA enabled."""
+        user = auth_manager.register(
+            name="MFA User",
+            email="mfa@example.com",
+            password="SecureP@ss1234!",
+            auto_verify=True,
+        )
+        setup = auth_manager.setup_mfa(user["id"])
+        code = _make_totp_code(setup["secret"])
+        result = auth_manager.verify_and_enable_mfa(user["id"], code)
+        return {**user, "recovery_codes": result["recovery_codes"]}
+
+    def test_verify_valid_recovery_code(
+        self, auth_manager: AuthManager, mfa_enabled_user: dict
+    ):
+        code = mfa_enabled_user["recovery_codes"][0]
+        assert auth_manager.verify_mfa_recovery_code(mfa_enabled_user["id"], code)
+
+    def test_verify_recovery_code_single_use(
+        self, auth_manager: AuthManager, mfa_enabled_user: dict
+    ):
+        code = mfa_enabled_user["recovery_codes"][0]
+        assert auth_manager.verify_mfa_recovery_code(mfa_enabled_user["id"], code)
+        assert not auth_manager.verify_mfa_recovery_code(mfa_enabled_user["id"], code)
+
+    def test_verify_invalid_recovery_code(
+        self, auth_manager: AuthManager, mfa_enabled_user: dict
+    ):
+        assert not auth_manager.verify_mfa_recovery_code(
+            mfa_enabled_user["id"], "AAAA-AAAA-AAAA"
+        )
+
+    def test_verify_empty_code(self, auth_manager: AuthManager, mfa_enabled_user: dict):
+        assert not auth_manager.verify_mfa_recovery_code(mfa_enabled_user["id"], "")

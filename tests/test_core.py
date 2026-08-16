@@ -16,6 +16,7 @@ from authority.exceptions import (
     AccountLockedError,
     AccountNotVerifiedError,
     ConfigurationError,
+    DatabaseError,
     InvalidCredentialsError,
     InvalidTokenError,
     TokenExpiredError,
@@ -24,7 +25,7 @@ from authority.exceptions import (
     ValidationError,
 )
 from authority.storage.sqlite import SQLiteStorage
-from authority.utils import generate_secure_token
+from authority.utils import generate_secure_token, hash_token
 
 # ── Helpers ─────────────────────────────────────────────────
 
@@ -835,6 +836,135 @@ class TestLogout:
         )
         count = auth_manager.logout_all(user_id=verified_user["id"])
         assert count >= 1
+
+
+class TestSessionManagement:
+    def test_list_sessions_empty(self, auth_manager: AuthManager, verified_user: dict):
+        assert auth_manager.list_sessions(verified_user["id"]) == []
+
+    def test_list_sessions_after_logins(
+        self, auth_manager: AuthManager, verified_user: dict
+    ):
+        auth_manager.login(
+            email="verified@example.com",
+            password="AuthP@ss12345!",
+        )
+        auth_manager.login(
+            email="verified@example.com",
+            password="AuthP@ss12345!",
+        )
+        sessions = auth_manager.list_sessions(verified_user["id"])
+        assert len(sessions) == 2
+        assert {"id", "created_at", "expires_at"} <= set(sessions[0])
+
+    def test_list_sessions_excludes_revoked(
+        self, auth_manager: AuthManager, verified_user: dict
+    ):
+        login1 = auth_manager.login(
+            email="verified@example.com",
+            password="AuthP@ss12345!",
+        )
+        login2 = auth_manager.login(
+            email="verified@example.com",
+            password="AuthP@ss12345!",
+        )
+        auth_manager.logout(
+            user_id=verified_user["id"],
+            refresh_token=login1["refresh_token"],
+        )
+        sessions = auth_manager.list_sessions(verified_user["id"])
+        assert len(sessions) == 1
+        login2_token = auth_manager.storage.get_refresh_token_by_hash(
+            hash_token(login2["refresh_token"])
+        )
+        assert login2_token is not None
+        assert sessions[0]["id"] == login2_token["id"]
+
+    def test_revoke_session_by_id(self, auth_manager: AuthManager, verified_user: dict):
+        login = auth_manager.login(
+            email="verified@example.com",
+            password="AuthP@ss12345!",
+        )
+        token_id = auth_manager.storage.list_refresh_tokens_for_user(
+            verified_user["id"]
+        )[0]["id"]
+        assert auth_manager.revoke_session_by_id(verified_user["id"], token_id)
+        assert auth_manager.list_sessions(verified_user["id"]) == []
+        with pytest.raises(InvalidTokenError, match="revoked"):
+            auth_manager.refresh_access_token(login["refresh_token"])
+
+    def test_revoke_session_by_id_unauthorized(
+        self, auth_manager: AuthManager, verified_user: dict
+    ):
+        auth_manager.login(
+            email="verified@example.com",
+            password="AuthP@ss12345!",
+        )
+        token_id = auth_manager.storage.list_refresh_tokens_for_user(
+            verified_user["id"]
+        )[0]["id"]
+        # Different user cannot revoke
+        assert not auth_manager.revoke_session_by_id(99999, token_id)
+        assert len(auth_manager.list_sessions(verified_user["id"])) == 1
+
+    def test_revoke_session_by_id_nonexistent(self, auth_manager: AuthManager):
+        assert not auth_manager.revoke_session_by_id(1, 99999)
+
+    def test_revoke_all_sessions_for_user(
+        self, auth_manager: AuthManager, verified_user: dict
+    ):
+        auth_manager.login(
+            email="verified@example.com",
+            password="AuthP@ss12345!",
+        )
+        auth_manager.login(
+            email="verified@example.com",
+            password="AuthP@ss12345!",
+        )
+        count = auth_manager.revoke_all_sessions_for_user(verified_user["id"])
+        assert count == 2
+        assert auth_manager.list_sessions(verified_user["id"]) == []
+
+    def test_revoke_all_sessions_excluding_one(
+        self, auth_manager: AuthManager, verified_user: dict
+    ):
+        auth_manager.login(
+            email="verified@example.com",
+            password="AuthP@ss12345!",
+        )
+        login2 = auth_manager.login(
+            email="verified@example.com",
+            password="AuthP@ss12345!",
+        )
+        login2_token = auth_manager.storage.get_refresh_token_by_hash(
+            hash_token(login2["refresh_token"])
+        )
+        assert login2_token is not None
+        keep_id = login2_token["id"]
+        count = auth_manager.revoke_all_sessions_for_user(
+            verified_user["id"], exclude_token_id=keep_id
+        )
+        assert count == 1
+        remaining = auth_manager.list_sessions(verified_user["id"])
+        assert len(remaining) == 1
+        assert remaining[0]["id"] == keep_id
+
+
+class TestContextManager:
+    def test_context_manager_closes_storage(
+        self, test_config: AuthConfig, tmp_db: SQLiteStorage
+    ):
+        with AuthManager(test_config, tmp_db) as auth:
+            user = auth.register(
+                name="CM User",
+                email="cm@example.com",
+                password="SecureP@ss1234!",
+                auto_verify=True,
+            )
+            assert auth.get_user(user["id"])["email"] == "cm@example.com"
+        # Storage should be closed after exiting the context
+        with pytest.raises(DatabaseError):
+            tmp_db.get_user_by_id(user["id"])
 
 
 # ── User Management ─────────────────────────────────────────

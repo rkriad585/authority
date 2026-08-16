@@ -31,6 +31,72 @@ def validate_email_format(email: str) -> bool:
     return _EMAIL_RE.match(email) is not None
 
 
+# ── Password Strength ───────────────────────────────────────
+
+
+def estimate_password_strength(password: str) -> dict[str, int | list[str]]:
+    """Estimate the strength of *password* on a 0-4 scale (no external deps).
+
+    Scores 0-1 (weak), 2 (fair), 3 (good), 4 (strong) based on length,
+    character-class diversity, and common-substring heuristics.
+
+    Args:
+        password: The password to evaluate.
+
+    Returns:
+        Dict with ``score`` (0-4) and ``feedback`` (list of suggestions).
+    """
+    if not password:
+        return {"score": 0, "feedback": ["Password cannot be empty."]}
+
+    score = 0
+    feedback: list[str] = []
+    length = len(password)
+
+    if length < 8:
+        feedback.append("Use at least 8 characters.")
+    elif length < 12:
+        score += 1
+        feedback.append("Aim for at least 12 characters.")
+    else:
+        score += 2
+
+    classes = 0
+    if any(c.islower() for c in password):
+        classes += 1
+    if any(c.isupper() for c in password):
+        classes += 1
+    if any(c.isdigit() for c in password):
+        classes += 1
+    if any(not c.isalnum() for c in password):
+        classes += 1
+
+    score += max(0, classes - 2)
+    if classes < 3:
+        feedback.append("Mix uppercase, lowercase, numbers, and special characters.")
+
+    lower = password.lower()
+    common = (
+        "password",
+        "123456",
+        "qwerty",
+        "letmein",
+        "admin",
+        "welcome",
+        "iloveyou",
+        "monkey",
+        "abc123",
+    )
+    if any(pat in lower for pat in common):
+        score = min(score, 2)
+        feedback.append("Avoid common words and sequences.")
+
+    if len(password) >= 12 and classes == 4:
+        score = 4
+
+    return {"score": max(0, min(score, 4)), "feedback": feedback}
+
+
 # ── Token Generation / Hashing ───────────────────────────────
 
 

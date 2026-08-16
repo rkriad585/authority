@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "authority-auth"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Comprehensive, framework-agnostic Python authentication library with JWT, MFA, WebAuthn, RBAC, API Keys, and pluggable storage."
 readme = "README.md"
 license = "MIT"
@@ -42,6 +42,7 @@ dependencies = [
 
 [project.optional-dependencies]
 async = ["aiosqlite>=0.20,<1"]
+fastapi = ["fastapi>=0.115,<1"]
 dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
@@ -49,15 +50,22 @@ dev = [
     "hypothesis>=6.100",
     "ruff>=0.6",
     "pyright>=1.1",
+    "fastapi>=0.115,<1",
 ]
 
 [project.urls]
 Homepage = "https://github.com/rkriad585/authority"
 Repository = "https://github.com/rkriad585/authority"
+Documentation = "https://github.com/rkriad585/authority#readme"
+Changelog = "https://github.com/rkriad585/authority/blob/main/CHANGELOG.md"
 Issues = "https://github.com/rkriad585/authority/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/authority"]
+
+[tool.hatch.version]
+path = ".version"
+pattern = "^(?P<version>[^\\s]+)"
 
 [tool.ruff]
 line-length = 88

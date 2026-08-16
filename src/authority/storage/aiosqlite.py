@@ -296,22 +296,22 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def get_user_by_id(self, user_id: int) -> dict[str, Any] | None:
         """Retrieve a user by their ID.
 
-            Args:
-                user_id: The user's integer ID.
+        Args:
+            user_id: The user's integer ID.
 
-            Returns:
-                User dict or None if not found."""
+        Returns:
+            User dict or None if not found."""
         cur = await self._execute("SELECT * FROM users WHERE id = ?", (user_id,))
         return _row_to_dict(await cur.fetchone())
 
     async def get_user_by_email(self, email: str) -> dict[str, Any] | None:
         """Retrieve a user by their email address (case-insensitive).
 
-            Args:
-                email: The user's email address.
+        Args:
+            email: The user's email address.
 
-            Returns:
-                User dict or None if not found."""
+        Returns:
+            User dict or None if not found."""
         cur = await self._execute(
             "SELECT * FROM users WHERE email = ?", (email.lower(),)
         )
@@ -328,15 +328,15 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     ) -> int:
         """Create a new user record.
 
-            Args:
-                name: Display name.
-                email: Email address.
-                password_hash: Bcrypt-hashed password.
-                is_verified: Whether the user is verified.
-                verification_token: Token for email verification.
+        Args:
+            name: Display name.
+            email: Email address.
+            password_hash: Bcrypt-hashed password.
+            is_verified: Whether the user is verified.
+            verification_token: Token for email verification.
 
-            Returns:
-                The newly created user dict."""
+        Returns:
+            The newly created user dict."""
         try:
             cur = await self._execute(
                 """INSERT INTO users
@@ -368,12 +368,12 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def update_user(self, user_id: int, updates: dict[str, Any]) -> bool:
         """Update fields on an existing user.
 
-            Args:
-                user_id: The user's integer ID.
-                **fields: Fields to update.
+        Args:
+            user_id: The user's integer ID.
+            **fields: Fields to update.
 
-            Returns:
-                True if the user was updated."""
+        Returns:
+            True if the user was updated."""
         if not updates:
             return True
         fields: list[str] = []
@@ -407,11 +407,11 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def delete_user(self, user_id: int) -> bool:
         """Delete a user by ID.
 
-            Args:
-                user_id: The user's integer ID.
+        Args:
+            user_id: The user's integer ID.
 
-            Returns:
-                True if the user was deleted."""
+        Returns:
+            True if the user was deleted."""
         try:
             cur = await self._execute("DELETE FROM users WHERE id = ?", (user_id,))
             await self._commit()
@@ -427,11 +427,11 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     ) -> dict[str, Any] | None:
         """Find a user by their email verification token.
 
-            Args:
-                token: The verification token.
+        Args:
+            token: The verification token.
 
-            Returns:
-                User dict or None."""
+        Returns:
+            User dict or None."""
         cur = await self._execute(
             "SELECT * FROM users WHERE verification_token_hash = ?", (token_hash,)
         )
@@ -440,11 +440,11 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def find_user_by_reset_token(self, token_hash: str) -> dict[str, Any] | None:
         """Find a user by their password reset token.
 
-            Args:
-                token: The reset token.
+        Args:
+            token: The reset token.
 
-            Returns:
-                User dict or None."""
+        Returns:
+            User dict or None."""
         cur = await self._execute(
             "SELECT * FROM users WHERE reset_token_hash = ?", (token_hash,)
         )
@@ -455,11 +455,11 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     ) -> dict[str, Any] | None:
         """Find a user by their email change confirmation token.
 
-            Args:
-                token: The email change token.
+        Args:
+            token: The email change token.
 
-            Returns:
-                User dict or None."""
+        Returns:
+            User dict or None."""
         cur = await self._execute(
             "SELECT * FROM users WHERE email_change_token_hash = ?", (token_hash,)
         )
@@ -470,11 +470,11 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     ) -> dict[str, Any] | None:
         """Find a user by their pending (unconfirmed) new email.
 
-            Args:
-                email: The pending email address.
+        Args:
+            email: The pending email address.
 
-            Returns:
-                User dict or None."""
+        Returns:
+            User dict or None."""
         cur = await self._execute(
             "SELECT * FROM users WHERE pending_email = ?", (pending_email.lower(),)
         )
@@ -485,10 +485,10 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def add_password_history(self, user_id: int, password_hash: str) -> None:
         """Record a password hash in the user's password history.
 
-            Args:
-                user_id: The user's integer ID.
-                password_hash: The bcrypt-hashed password.
-                max_history: Maximum number of historical entries to retain."""
+        Args:
+            user_id: The user's integer ID.
+            password_hash: The bcrypt-hashed password.
+            max_history: Maximum number of historical entries to retain."""
         try:
             await self._execute(
                 "INSERT INTO password_history (user_id, password_hash) VALUES (?, ?)",
@@ -502,12 +502,12 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def get_password_history(self, user_id: int, limit: int) -> list[str]:
         """Retrieve password hashes for a user.
 
-            Args:
-                user_id: The user's integer ID.
-                limit: Maximum number of entries to return.
+        Args:
+            user_id: The user's integer ID.
+            limit: Maximum number of entries to return.
 
-            Returns:
-                List of password history dicts."""
+        Returns:
+            List of password history dicts."""
         if limit <= 0:
             return []
         try:
@@ -534,14 +534,14 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     ) -> int:
         """Persist a refresh token hash.
 
-            Args:
-                user_id: The user's integer ID.
-                token_hash: SHA-256 hash of the token.
-                device_id: Optional device identifier.
-                user_agent: Optional user-agent string.
-                ip_address: Optional IP address.
-                expires_at: Token expiration datetime.
-                family: Token family identifier for reuse detection."""
+        Args:
+            user_id: The user's integer ID.
+            token_hash: SHA-256 hash of the token.
+            device_id: Optional device identifier.
+            user_agent: Optional user-agent string.
+            ip_address: Optional IP address.
+            expires_at: Token expiration datetime.
+            family: Token family identifier for reuse detection."""
         try:
             cur = await self._execute(
                 """INSERT INTO refresh_tokens
@@ -573,21 +573,34 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def get_refresh_token_by_hash(self, token_hash: str) -> dict[str, Any] | None:
         """Look up a refresh token by its hash.
 
-            Args:
-                token_hash: SHA-256 hash of the token.
+        Args:
+            token_hash: SHA-256 hash of the token.
 
-            Returns:
-                Token dict or None."""
+        Returns:
+            Token dict or None."""
         cur = await self._execute(
             "SELECT * FROM refresh_tokens WHERE token_hash = ?", (token_hash,)
+        )
+        return _row_to_dict(await cur.fetchone())
+
+    async def get_refresh_token_by_id(self, token_id: int) -> dict[str, Any] | None:
+        """Look up a refresh token by its database ID.
+
+        Args:
+            token_id: The token's database ID.
+
+        Returns:
+            Token dict or None."""
+        cur = await self._execute(
+            "SELECT * FROM refresh_tokens WHERE id = ?", (token_id,)
         )
         return _row_to_dict(await cur.fetchone())
 
     async def mark_refresh_token_used(self, token_id: int) -> bool:
         """Mark a refresh token as used and record the timestamp.
 
-            Args:
-                token_hash: SHA-256 hash of the token."""
+        Args:
+            token_hash: SHA-256 hash of the token."""
         try:
             cur = await self._execute(
                 "UPDATE refresh_tokens SET used = TRUE, used_at = CURRENT_TIMESTAMP WHERE id = ? AND used = FALSE",
@@ -607,12 +620,12 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     ) -> bool:
         """Rotate a refresh token: revoke the old one, store the new one.
 
-            Args:
-                old_token_hash: Hash of the token being replaced.
-                new_token_hash: Hash of the new token.
-                new_expires_at: Expiration datetime for the new token.
-                user_agent: Optional user-agent string.
-                ip_address: Optional IP address."""
+        Args:
+            old_token_hash: Hash of the token being replaced.
+            new_token_hash: Hash of the new token.
+            new_expires_at: Expiration datetime for the new token.
+            user_agent: Optional user-agent string.
+            ip_address: Optional IP address."""
         try:
             cur = await self._execute(
                 "SELECT user_id, family_id, ip_address, user_agent FROM refresh_tokens WHERE id = ?",
@@ -651,8 +664,8 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def revoke_refresh_token(self, token_id: int) -> bool:
         """Revoke a single refresh token.
 
-            Args:
-                token_hash: SHA-256 hash of the token."""
+        Args:
+            token_hash: SHA-256 hash of the token."""
         try:
             cur = await self._execute(
                 "UPDATE refresh_tokens SET revoked = TRUE WHERE id = ?", (token_id,)
@@ -668,11 +681,11 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     ) -> int:
         """Revoke all refresh tokens for a user.
 
-            Args:
-                user_id: The user's integer ID.
+        Args:
+            user_id: The user's integer ID.
 
-            Returns:
-                Number of tokens revoked."""
+        Returns:
+            Number of tokens revoked."""
         try:
             query = "UPDATE refresh_tokens SET revoked = TRUE WHERE user_id = ? AND revoked = FALSE"
             params: list[Any] = [user_id]
@@ -692,8 +705,8 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def revoke_token_family(self, family_id: str) -> int:
         """Revoke all tokens in a family (for reuse detection).
 
-            Args:
-                family: The token family identifier."""
+        Args:
+            family: The token family identifier."""
         try:
             cur = await self._execute(
                 "UPDATE refresh_tokens SET revoked = TRUE WHERE family_id = ? AND revoked = FALSE",
@@ -711,11 +724,11 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def list_refresh_tokens_for_user(self, user_id: int) -> list[dict[str, Any]]:
         """List all refresh tokens for a user.
 
-            Args:
-                user_id: The user's integer ID.
+        Args:
+            user_id: The user's integer ID.
 
-            Returns:
-                List of token dicts."""
+        Returns:
+            List of token dicts."""
         try:
             cur = await self._execute(
                 "SELECT id, family_id, expires_at, created_at, revoked, ip_address, user_agent "
@@ -729,8 +742,8 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def prune_expired_refresh_tokens(self) -> int:
         """Delete expired refresh tokens from the database.
 
-            Returns:
-                Number of tokens pruned."""
+        Returns:
+            Number of tokens pruned."""
         try:
             now = datetime.datetime.now(datetime.timezone.utc)
             cur = await self._execute(
@@ -754,9 +767,9 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     ) -> None:
         """Store hashed MFA recovery codes for a user.
 
-            Args:
-                user_id: The user's integer ID.
-                codes: List of plaintext recovery codes to hash and store."""
+        Args:
+            user_id: The user's integer ID.
+            codes: List of plaintext recovery codes to hash and store."""
         try:
             await self._execute(
                 "DELETE FROM mfa_recovery_codes WHERE user_id = ? AND used = FALSE",
@@ -779,12 +792,12 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def use_mfa_recovery_code(self, user_id: int, hashed_code: str) -> bool:
         """Consume a recovery code (mark it as used).
 
-            Args:
-                user_id: The user's integer ID.
-                code: The plaintext recovery code.
+        Args:
+            user_id: The user's integer ID.
+            code: The plaintext recovery code.
 
-            Returns:
-                True if the code was valid and consumed."""
+        Returns:
+            True if the code was valid and consumed."""
         try:
             cur = await self._execute(
                 """UPDATE mfa_recovery_codes
@@ -803,11 +816,11 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def get_active_mfa_recovery_codes_count(self, user_id: int) -> int:
         """Count unused recovery codes for a user.
 
-            Args:
-                user_id: The user's integer ID.
+        Args:
+            user_id: The user's integer ID.
 
-            Returns:
-                Number of active recovery codes."""
+        Returns:
+            Number of active recovery codes."""
         try:
             cur = await self._execute(
                 "SELECT COUNT(*) FROM mfa_recovery_codes WHERE user_id = ? AND used = FALSE",
@@ -835,16 +848,16 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     ) -> int:
         """Register a new WebAuthn credential.
 
-            Args:
-                user_id: The user's integer ID.
-                credential_id: WebAuthn credential identifier.
-                public_key: The credential's public key.
-                sign_count: Initial signature counter.
-                transports: List of supported transports.
-                nickname: Optional human-readable label.
+        Args:
+            user_id: The user's integer ID.
+            credential_id: WebAuthn credential identifier.
+            public_key: The credential's public key.
+            sign_count: Initial signature counter.
+            transports: List of supported transports.
+            nickname: Optional human-readable label.
 
-            Returns:
-                The stored credential dict."""
+        Returns:
+            The stored credential dict."""
         transports_json = json.dumps(transports) if transports else None
         try:
             cur = await self._execute(
@@ -882,11 +895,11 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     ) -> list[dict[str, Any]]:
         """List all WebAuthn credentials for a user.
 
-            Args:
-                user_id: The user's integer ID.
+        Args:
+            user_id: The user's integer ID.
 
-            Returns:
-                List of credential dicts."""
+        Returns:
+            List of credential dicts."""
         try:
             query = "SELECT * FROM webauthn_credentials WHERE user_id = ?"
             params: list[Any] = [user_id]
@@ -914,11 +927,11 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     ) -> dict[str, Any] | None:
         """Retrieve a WebAuthn credential by its ID.
 
-            Args:
-                credential_id: The WebAuthn credential identifier.
+        Args:
+            credential_id: The WebAuthn credential identifier.
 
-            Returns:
-                Credential dict or None."""
+        Returns:
+            Credential dict or None."""
         try:
             cur = await self._execute(
                 "SELECT * FROM webauthn_credentials WHERE credential_id = ?",
@@ -944,9 +957,9 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     ) -> bool:
         """Update the signature counter on a credential.
 
-            Args:
-                credential_id: The WebAuthn credential identifier.
-                new_count: The new signature counter value."""
+        Args:
+            credential_id: The WebAuthn credential identifier.
+            new_count: The new signature counter value."""
         try:
             cur = await self._execute(
                 "UPDATE webauthn_credentials SET sign_count = ? WHERE credential_id = ?",
@@ -963,8 +976,8 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def update_webauthn_credential_last_used(self, credential_id: bytes) -> None:
         """Update the last-used timestamp on a credential.
 
-            Args:
-                credential_id: The WebAuthn credential identifier."""
+        Args:
+            credential_id: The WebAuthn credential identifier."""
         try:
             await self._execute(
                 "UPDATE webauthn_credentials SET last_used_at = CURRENT_TIMESTAMP WHERE credential_id = ?",
@@ -980,8 +993,8 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     ) -> bool:
         """Delete a WebAuthn credential.
 
-            Args:
-                credential_id: The WebAuthn credential identifier."""
+        Args:
+            credential_id: The WebAuthn credential identifier."""
         try:
             cur = await self._execute(
                 "DELETE FROM webauthn_credentials WHERE user_id = ? AND credential_id = ?",
@@ -1000,12 +1013,12 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def create_role(self, name: str, description: str | None = None) -> int:
         """Create a new role.
 
-            Args:
-                name: Unique role name.
-                description: Optional description.
+        Args:
+            name: Unique role name.
+            description: Optional description.
 
-            Returns:
-                The integer ID of the new role."""
+        Returns:
+            The integer ID of the new role."""
         try:
             cur = await self._execute(
                 "INSERT INTO roles (name, description) VALUES (?, ?)",
@@ -1029,33 +1042,33 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def get_role_by_name(self, name: str) -> dict[str, Any] | None:
         """Look up a role by name.
 
-            Args:
-                name: The role name.
+        Args:
+            name: The role name.
 
-            Returns:
-                Role dict or None."""
+        Returns:
+            Role dict or None."""
         cur = await self._execute("SELECT * FROM roles WHERE name = ?", (name,))
         return _row_to_dict(await cur.fetchone())
 
     async def get_role_by_id(self, role_id: int) -> dict[str, Any] | None:
         """Look up a role by ID.
 
-            Args:
-                role_id: The role's integer ID.
+        Args:
+            role_id: The role's integer ID.
 
-            Returns:
-                Role dict or None."""
+        Returns:
+            Role dict or None."""
         cur = await self._execute("SELECT * FROM roles WHERE id = ?", (role_id,))
         return _row_to_dict(await cur.fetchone())
 
     async def delete_role(self, role_id: int) -> bool:
         """Delete a role by ID.
 
-            Args:
-                role_id: The role's integer ID.
+        Args:
+            role_id: The role's integer ID.
 
-            Returns:
-                True if the role was deleted."""
+        Returns:
+            True if the role was deleted."""
         try:
             cur = await self._execute("DELETE FROM roles WHERE id = ?", (role_id,))
             await self._commit()
@@ -1067,8 +1080,8 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def list_roles(self) -> list[dict[str, Any]]:
         """List all roles.
 
-            Returns:
-                List of role dicts."""
+        Returns:
+            List of role dicts."""
         try:
             cur = await self._execute("SELECT * FROM roles ORDER BY name")
             return [dict(row) for row in await cur.fetchall()]
@@ -1078,12 +1091,12 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def create_permission(self, code: str, description: str | None = None) -> int:
         """Create a new permission.
 
-            Args:
-                code: Unique permission code (e.g., "items.delete").
-                description: Optional description.
+        Args:
+            code: Unique permission code (e.g., "items.delete").
+            description: Optional description.
 
-            Returns:
-                The integer ID of the new permission."""
+        Returns:
+            The integer ID of the new permission."""
         try:
             cur = await self._execute(
                 "INSERT INTO permissions (code, description) VALUES (?, ?)",
@@ -1109,22 +1122,22 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def get_permission_by_code(self, code: str) -> dict[str, Any] | None:
         """Look up a permission by code.
 
-            Args:
-                code: The permission code.
+        Args:
+            code: The permission code.
 
-            Returns:
-                Permission dict or None."""
+        Returns:
+            Permission dict or None."""
         cur = await self._execute("SELECT * FROM permissions WHERE code = ?", (code,))
         return _row_to_dict(await cur.fetchone())
 
     async def get_permission_by_id(self, permission_id: int) -> dict[str, Any] | None:
         """Look up a permission by ID.
 
-            Args:
-                permission_id: The permission's integer ID.
+        Args:
+            permission_id: The permission's integer ID.
 
-            Returns:
-                Permission dict or None."""
+        Returns:
+            Permission dict or None."""
         cur = await self._execute(
             "SELECT * FROM permissions WHERE id = ?", (permission_id,)
         )
@@ -1133,11 +1146,11 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def delete_permission(self, permission_id: int) -> bool:
         """Delete a permission by ID.
 
-            Args:
-                permission_id: The permission's integer ID.
+        Args:
+            permission_id: The permission's integer ID.
 
-            Returns:
-                True if the permission was deleted."""
+        Returns:
+            True if the permission was deleted."""
         try:
             cur = await self._execute(
                 "DELETE FROM permissions WHERE id = ?", (permission_id,)
@@ -1153,8 +1166,8 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def list_permissions(self) -> list[dict[str, Any]]:
         """List all permissions.
 
-            Returns:
-                List of permission dicts."""
+        Returns:
+            List of permission dicts."""
         try:
             cur = await self._execute("SELECT * FROM permissions ORDER BY code")
             return [dict(row) for row in await cur.fetchall()]
@@ -1166,12 +1179,12 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def assign_permission_to_role(self, role_id: int, permission_id: int) -> bool:
         """Assign a permission to a role.
 
-            Args:
-                role_id: The role's integer ID.
-                permission_id: The permission's integer ID.
+        Args:
+            role_id: The role's integer ID.
+            permission_id: The permission's integer ID.
 
-            Returns:
-                True if assigned."""
+        Returns:
+            True if assigned."""
         try:
             await self._execute(
                 "INSERT OR IGNORE INTO role_permissions (role_id, permission_id) VALUES (?, ?)",
@@ -1190,12 +1203,12 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     ) -> bool:
         """Remove a permission from a role.
 
-            Args:
-                role_id: The role's integer ID.
-                permission_id: The permission's integer ID.
+        Args:
+            role_id: The role's integer ID.
+            permission_id: The permission's integer ID.
 
-            Returns:
-                True if removed."""
+        Returns:
+            True if removed."""
         try:
             cur = await self._execute(
                 "DELETE FROM role_permissions WHERE role_id = ? AND permission_id = ?",
@@ -1212,11 +1225,11 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def get_role_permissions(self, role_id: int) -> list[dict[str, Any]]:
         """Get all permissions assigned to a role.
 
-            Args:
-                role_id: The role's integer ID.
+        Args:
+            role_id: The role's integer ID.
 
-            Returns:
-                List of permission dicts."""
+        Returns:
+            List of permission dicts."""
         try:
             cur = await self._execute(
                 "SELECT p.* FROM permissions p "
@@ -1233,12 +1246,12 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def assign_role_to_user(self, user_id: int, role_id: int) -> bool:
         """Assign a role to a user.
 
-            Args:
-                user_id: The user's integer ID.
-                role_id: The role's integer ID.
+        Args:
+            user_id: The user's integer ID.
+            role_id: The role's integer ID.
 
-            Returns:
-                True if assigned."""
+        Returns:
+            True if assigned."""
         try:
             await self._execute(
                 "INSERT OR IGNORE INTO user_roles (user_id, role_id) VALUES (?, ?)",
@@ -1253,12 +1266,12 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def remove_role_from_user(self, user_id: int, role_id: int) -> bool:
         """Remove a role from a user.
 
-            Args:
-                user_id: The user's integer ID.
-                role_id: The role's integer ID.
+        Args:
+            user_id: The user's integer ID.
+            role_id: The role's integer ID.
 
-            Returns:
-                True if removed."""
+        Returns:
+            True if removed."""
         try:
             cur = await self._execute(
                 "DELETE FROM user_roles WHERE user_id = ? AND role_id = ?",
@@ -1273,11 +1286,11 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def get_user_roles(self, user_id: int) -> list[dict[str, Any]]:
         """Get all roles assigned to a user.
 
-            Args:
-                user_id: The user's integer ID.
+        Args:
+            user_id: The user's integer ID.
 
-            Returns:
-                List of role dicts."""
+        Returns:
+            List of role dicts."""
         try:
             cur = await self._execute(
                 "SELECT r.* FROM roles r "
@@ -1292,11 +1305,11 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def get_user_permissions(self, user_id: int) -> list[str]:
         """Get all effective permission codes for a user.
 
-            Args:
-                user_id: The user's integer ID.
+        Args:
+            user_id: The user's integer ID.
 
-            Returns:
-                List of permission code strings."""
+        Returns:
+            List of permission code strings."""
         try:
             cur = await self._execute(
                 "SELECT DISTINCT p.code FROM permissions p "
@@ -1324,17 +1337,17 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     ) -> int:
         """Persist a hashed API key.
 
-            Args:
-                user_id: The user's integer ID.
-                key_prefix: First few chars of the key for identification.
-                key_hash: SHA-256 hash of the full key.
-                description: Optional description.
-                scopes: Optional list of scope strings.
-                expires_at: Optional expiration datetime.
-                ip_address: Optional IP address restriction.
+        Args:
+            user_id: The user's integer ID.
+            key_prefix: First few chars of the key for identification.
+            key_hash: SHA-256 hash of the full key.
+            description: Optional description.
+            scopes: Optional list of scope strings.
+            expires_at: Optional expiration datetime.
+            ip_address: Optional IP address restriction.
 
-            Returns:
-                The stored API key dict."""
+        Returns:
+            The stored API key dict."""
         try:
             cur = await self._execute(
                 """INSERT INTO api_keys
@@ -1366,12 +1379,12 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     ) -> dict[str, Any] | None:
         """Look up an API key by prefix and hash.
 
-            Args:
-                prefix: The key prefix.
-                key_hash: SHA-256 hash of the full key.
+        Args:
+            prefix: The key prefix.
+            key_hash: SHA-256 hash of the full key.
 
-            Returns:
-                API key dict or None."""
+        Returns:
+            API key dict or None."""
         try:
             cur = await self._execute(
                 """SELECT k.*, u.email as user_email, u.is_active as user_is_active
@@ -1386,8 +1399,8 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def update_api_key_last_used(self, key_prefix: str) -> None:
         """Update the last-used timestamp on an API key.
 
-            Args:
-                key_prefix: The key prefix."""
+        Args:
+            key_prefix: The key prefix."""
         try:
             await self._execute(
                 "UPDATE api_keys SET last_used_at = CURRENT_TIMESTAMP WHERE key_prefix = ?",
@@ -1401,11 +1414,11 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def list_api_keys_for_user(self, user_id: int) -> list[dict[str, Any]]:
         """List all API keys for a user.
 
-            Args:
-                user_id: The user's integer ID.
+        Args:
+            user_id: The user's integer ID.
 
-            Returns:
-                List of API key dicts."""
+        Returns:
+            List of API key dicts."""
         try:
             cur = await self._execute(
                 "SELECT id, key_prefix, description, scopes_json, expires_at, last_used_at, created_at "
@@ -1430,11 +1443,11 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def delete_api_key_by_prefix(self, user_id: int, key_prefix: str) -> bool:
         """Delete an API key by its prefix.
 
-            Args:
-                prefix: The key prefix.
+        Args:
+            prefix: The key prefix.
 
-            Returns:
-                True if deleted."""
+        Returns:
+            True if deleted."""
         try:
             cur = await self._execute(
                 "DELETE FROM api_keys WHERE user_id = ? AND key_prefix = ?",
@@ -1453,12 +1466,12 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     ) -> bool:
         """Update custom profile data for a user.
 
-            Args:
-                user_id: The user's integer ID.
-                data: Dictionary of custom profile fields.
+        Args:
+            user_id: The user's integer ID.
+            data: Dictionary of custom profile fields.
 
-            Returns:
-                True if updated."""
+        Returns:
+            True if updated."""
         try:
             profile_json = json.dumps(profile_data)
             cur = await self._execute(
@@ -1474,11 +1487,11 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     async def get_user_custom_profile(self, user_id: int) -> dict[str, Any] | None:
         """Retrieve custom profile data for a user.
 
-            Args:
-                user_id: The user's integer ID.
+        Args:
+            user_id: The user's integer ID.
 
-            Returns:
-                Custom profile dict or empty dict."""
+        Returns:
+            Custom profile dict or empty dict."""
         try:
             cur = await self._execute(
                 "SELECT custom_profile FROM users WHERE id = ?", (user_id,)
@@ -1504,13 +1517,13 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     ) -> None:
         """Record an audit log entry.
 
-            Args:
-                user_id: The user's integer ID.
-                actor_id: ID of the user performing the action.
-                action: Action code (e.g., "auth.login").
-                resource: Optional resource identifier.
-                success: Whether the action succeeded.
-                details: Optional JSON-serializable detail dict."""
+        Args:
+            user_id: The user's integer ID.
+            actor_id: ID of the user performing the action.
+            action: Action code (e.g., "auth.login").
+            resource: Optional resource identifier.
+            success: Whether the action succeeded.
+            details: Optional JSON-serializable detail dict."""
         try:
             await self._execute(
                 """INSERT INTO auth_audit_log
@@ -1532,14 +1545,14 @@ class AsyncSQLiteStorage(AsyncStorageInterface):
     ) -> list[dict[str, Any]]:
         """Query audit log entries.
 
-            Args:
-                user_id: Filter by user ID.
-                action: Filter by action code.
-                limit: Maximum number of entries to return.
-                offset: Pagination offset.
+        Args:
+            user_id: Filter by user ID.
+            action: Filter by action code.
+            limit: Maximum number of entries to return.
+            offset: Pagination offset.
 
-            Returns:
-                List of audit log dicts."""
+        Returns:
+            List of audit log dicts."""
         try:
             conditions: list[str] = []
             params: list[Any] = []

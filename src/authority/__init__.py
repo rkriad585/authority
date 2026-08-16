@@ -1,6 +1,17 @@
 """Authority — comprehensive, framework-agnostic Python authentication library."""
 
-__version__ = "0.1.0"
+import logging
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _dist_version
+from pathlib import Path
+
+try:
+    __version__ = _dist_version("authority-auth")
+except PackageNotFoundError:
+    _version_file = Path(__file__).resolve().parents[2] / ".version"
+    __version__ = (
+        _version_file.read_text().strip() if _version_file.exists() else "0.0.0"
+    )
 
 from .async_core import AsyncAuthManager
 from .config import AuthConfig
@@ -42,6 +53,7 @@ from .utils import (
     check_password_pwned,
     decrypt_data,
     encrypt_data,
+    estimate_password_strength,
     generate_secure_token,
     hash_token,
     reset_fernet_cache,
@@ -96,4 +108,7 @@ __all__ = [
     "decrypt_data",
     "reset_fernet_cache",
     "check_password_pwned",
+    "estimate_password_strength",
 ]
+
+logging.getLogger(__name__).addHandler(logging.NullHandler())

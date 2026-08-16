@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import pytest
+
 from authority.core import AuthManager
+from authority.exceptions import InsufficientPermissionsError
 
 
 class TestRoles:
@@ -126,3 +129,32 @@ class TestEffectivePermissions:
     def test_no_permissions(self, auth_manager: AuthManager, verified_user: dict):
         assert auth_manager.get_user_permissions(verified_user["id"]) == []
         assert not auth_manager.has_permission(verified_user["id"], "anything")
+
+
+class TestRequirePermission:
+    def test_require_permission_passes(
+        self, auth_manager: AuthManager, verified_user: dict
+    ):
+        role = auth_manager.create_role("viewer")
+        perm = auth_manager.create_permission("content:read")
+        auth_manager.assign_permission_to_role(role["id"], perm["id"])
+        auth_manager.assign_role_to_user(verified_user["id"], role["id"])
+
+        auth_manager.require_permission(verified_user["id"], "content:read")
+
+    def test_require_permission_denied(
+        self, auth_manager: AuthManager, verified_user: dict
+    ):
+        role = auth_manager.create_role("viewer")
+        perm = auth_manager.create_permission("content:read")
+        auth_manager.assign_permission_to_role(role["id"], perm["id"])
+        auth_manager.assign_role_to_user(verified_user["id"], role["id"])
+
+        with pytest.raises(InsufficientPermissionsError, match="content:write"):
+            auth_manager.require_permission(verified_user["id"], "content:write")
+
+    def test_require_permission_no_permissions(
+        self, auth_manager: AuthManager, verified_user: dict
+    ):
+        with pytest.raises(InsufficientPermissionsError):
+            auth_manager.require_permission(verified_user["id"], "anything")

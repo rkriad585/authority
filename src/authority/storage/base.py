@@ -135,6 +135,10 @@ class StorageInterface(ABC):
         """Return a refresh token record by its hash, or None."""
 
     @abstractmethod
+    def get_refresh_token_by_id(self, token_id: int) -> dict[str, Any] | None:
+        """Return a refresh token record by its ID, or None."""
+
+    @abstractmethod
     def mark_refresh_token_used(self, token_id: int) -> bool:
         """Mark a refresh token as used for reuse detection.
 
@@ -630,6 +634,10 @@ class AsyncStorageInterface(ABC):
     @abstractmethod
     async def get_refresh_token_by_hash(self, token_hash: str) -> dict[str, Any] | None:
         """Return a refresh token record by its hash, or None."""
+
+    @abstractmethod
+    async def get_refresh_token_by_id(self, token_id: int) -> dict[str, Any] | None:
+        """Return a refresh token record by its ID, or None."""
 
     @abstractmethod
     async def mark_refresh_token_used(self, token_id: int) -> bool:

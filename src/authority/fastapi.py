@@ -49,7 +49,7 @@ def get_auth_manager() -> AsyncAuthManager:
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(_bearer_scheme),
+    credentials: HTTPAuthorizationCredentials = Depends(_bearer_scheme),  # noqa: B008
 ) -> dict[str, Any]:
     """FastAPI dependency that extracts and validates the current user from a JWT.
 
@@ -77,19 +77,19 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has expired.",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from None
     except InvalidTokenError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid token: {exc}",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from None
     except InvalidCredentialsError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials.",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from None
 
 
 async def require_permission(permission_code: str):
@@ -115,7 +115,7 @@ async def require_permission(permission_code: str):
     """
 
     async def _check_permission(
-        credentials: HTTPAuthorizationCredentials = Depends(_bearer_scheme),
+        credentials: HTTPAuthorizationCredentials = Depends(_bearer_scheme),  # noqa: B008
     ) -> dict[str, Any]:
         manager = get_auth_manager()
         try:
@@ -125,13 +125,13 @@ async def require_permission(permission_code: str):
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token has expired.",
                 headers={"WWW-Authenticate": "Bearer"},
-            )
+            ) from None
         except InvalidTokenError as exc:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=f"Invalid token: {exc}",
                 headers={"WWW-Authenticate": "Bearer"},
-            )
+            ) from None
 
         user_id = payload["user_id"]
         permissions = await manager.get_user_permissions(user_id)
@@ -166,7 +166,7 @@ async def require_role(role_name: str):
     """
 
     async def _check_role(
-        credentials: HTTPAuthorizationCredentials = Depends(_bearer_scheme),
+        credentials: HTTPAuthorizationCredentials = Depends(_bearer_scheme),  # noqa: B008
     ) -> dict[str, Any]:
         manager = get_auth_manager()
         try:
@@ -176,13 +176,13 @@ async def require_role(role_name: str):
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token has expired.",
                 headers={"WWW-Authenticate": "Bearer"},
-            )
+            ) from None
         except InvalidTokenError as exc:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=f"Invalid token: {exc}",
                 headers={"WWW-Authenticate": "Bearer"},
-            )
+            ) from None
 
         user_id = payload["user_id"]
         roles = await manager.get_user_roles(user_id)

@@ -18,6 +18,7 @@ from .exceptions import (
     AccountLockedError,
     AccountNotVerifiedError,
     ConfigurationError,
+    InsufficientPermissionsError,
     InvalidCredentialsError,
     InvalidTokenError,
     PasswordPwnedError,
@@ -1106,6 +1107,118 @@ class AuthManager:
 
         return count
 
+    # ── Session Management ──────────────────────────────────
+
+    def list_sessions(self, user_id: int) -> list[dict[str, Any]]:
+        """List active sessions (non-revoked, non-expired refresh tokens).
+
+        Args:
+            user_id: The user ID.
+
+        Returns:
+            List of session dicts with ``id``, ``family_id``, ``created_at``,
+            ``expires_at``, ``ip_address``, and ``user_agent``.
+        """
+        now = datetime.datetime.now(datetime.timezone.utc)
+        sessions: list[dict[str, Any]] = []
+        for token in self._storage.list_refresh_tokens_for_user(user_id):
+            if token.get("revoked"):
+                continue
+            expires_at = token.get("expires_at")
+            if isinstance(expires_at, str):
+                try:
+                    expires_at = datetime.datetime.fromisoformat(expires_at)
+                except ValueError:
+                    continue
+            if expires_at and expires_at.replace(tzinfo=datetime.timezone.utc) < now:
+                continue
+            sessions.append(token)
+        return sessions
+
+    def revoke_session_by_id(
+        self,
+        user_id: int,
+        session_token_id: int,
+        ip_address: str | None = None,
+    ) -> bool:
+        """Revoke a single session (refresh token) owned by *user_id*.
+
+        Args:
+            user_id: The owning user (ownership check).
+            session_token_id: The refresh token database ID.
+            ip_address: Client IP for audit logging.
+
+        Returns:
+            True if the session was revoked.
+        """
+        token = self._storage.get_refresh_token_by_id(session_token_id)
+        if not token or token.get("user_id") != user_id:
+            logger.warning(
+                "User %s attempted to revoke unauthorized session %s",
+                user_id,
+                session_token_id,
+            )
+            return False
+
+        revoked = self._storage.revoke_refresh_token(session_token_id)
+        if revoked:
+            self._events.emit(
+                Event.TOKEN_REVOKED,
+                {
+                    "user_id": user_id,
+                    "token_id": session_token_id,
+                    "ip_address": ip_address,
+                },
+            )
+            self._log_audit(
+                user_id,
+                None,
+                "session.revoked",
+                ip_address,
+                True,
+                f"token_id={session_token_id}",
+            )
+        return revoked
+
+    def revoke_all_sessions_for_user(
+        self,
+        user_id: int,
+        exclude_token_id: int | None = None,
+        ip_address: str | None = None,
+    ) -> int:
+        """Revoke all active sessions for a user, optionally keeping one.
+
+        Args:
+            user_id: The user ID.
+            exclude_token_id: Optional refresh token ID to keep active.
+            ip_address: Client IP for audit logging.
+
+        Returns:
+            Number of sessions revoked.
+        """
+        count = self._storage.revoke_all_refresh_tokens_for_user(
+            user_id, exclude_token_id=exclude_token_id
+        )
+        if count:
+            self._events.emit(
+                Event.TOKEN_REVOKED,
+                {
+                    "user_id": user_id,
+                    "all_sessions": True,
+                    "count": count,
+                    "ip_address": ip_address,
+                },
+            )
+        self._log_audit(
+            user_id,
+            None,
+            "session.revoke_all",
+            ip_address,
+            True,
+            f"count={count}",
+        )
+        return count
+
     # ── User Management ────────────────────────────────────
 
     def get_user(self, user_id: int) -> dict[str, Any]:
@@ -1411,6 +1524,24 @@ class AuthManager:
         )
         raise MFAFailedError("Invalid MFA code. Please try again.")
 
+    def verify_mfa_recovery_code(self, user_id: int, recovery_code: str) -> bool:
+        """Verify and consume a single-use MFA recovery code.
+
+        Args:
+            user_id: The user ID.
+            recovery_code: The plaintext recovery code to check.
+
+        Returns:
+            True if the code was valid and consumed.
+        """
+        if not recovery_code:
+            return False
+        code_hash = hash_token(recovery_code)
+        used = self._storage.use_mfa_recovery_code(user_id, code_hash)
+        if used:
+            self._log_audit(user_id, None, "mfa.recovery_code_used", None, True)
+        return used
+
     def _issue_tokens_after_mfa(
         self,
         user: dict[str, Any],
@@ -1694,6 +1825,22 @@ class AuthManager:
         perms = self._storage.get_user_permissions(user_id)
         return permission_code in perms
 
+    def require_permission(self, user_id: int, permission_code: str) -> None:
+        """Require a permission for a user, raising on failure.
+
+        Args:
+            user_id: The user ID.
+            permission_code: The permission code to check (e.g. 'users:read').
+
+        Raises:
+            InsufficientPermissionsError: The user lacks the permission.
+        """
+        if not self.has_permission(user_id, permission_code):
+            self._log_audit(user_id, None, "rbac.permission_denied", None, False)
+            raise InsufficientPermissionsError(
+                f"Required permission denied: {permission_code}"
+            )
+
     # ── API Keys ───────────────────────────────────────────
 
     def create_api_key(
@@ -1940,6 +2087,7 @@ class AuthManager:
         """
         try:
             from webauthn import options_to_json  # noqa: F401
+            from webauthn.helpers.cose import COSEAlgorithmIdentifier
             from webauthn.helpers.structs import (
                 PublicKeyCredentialCreationOptions,
                 PublicKeyCredentialParameters,
@@ -1976,8 +2124,14 @@ class AuthManager:
         )
 
         pub_key_params = [
-            PublicKeyCredentialParameters(type="public-key", alg=-7),  # ES256
-            PublicKeyCredentialParameters(type="public-key", alg=-257),  # RS256
+            PublicKeyCredentialParameters(
+                type="public-key",
+                alg=COSEAlgorithmIdentifier.ECDSA_SHA_256,
+            ),
+            PublicKeyCredentialParameters(
+                type="public-key",
+                alg=COSEAlgorithmIdentifier.RSASSA_PKCS1_v1_5_SHA_256,
+            ),
         ]
 
         options = PublicKeyCredentialCreationOptions(
@@ -2280,3 +2434,11 @@ class AuthManager:
     def close(self) -> None:
         """Close the storage connection."""
         self._storage.close()
+
+    def __enter__(self) -> AuthManager:
+        """Support ``with AuthManager(...) as auth:``."""
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """Close the storage connection when leaving the context."""
+        self.close()

@@ -34,6 +34,7 @@ class Event(str, Enum):
     # Tokens
     TOKEN_REFRESHED = "token.refreshed"
     TOKEN_REUSE_DETECTED = "token.reuse_detected"
+    TOKEN_REVOKED = "token.revoked"
 
     # WebAuthn
     WEBAUTHN_CREDENTIAL_ADDED = "webauthn.credential_added"

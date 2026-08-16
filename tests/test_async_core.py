@@ -16,6 +16,7 @@ from authority.exceptions import (
     AccountLockedError,
     AccountNotVerifiedError,
     ConfigurationError,
+    InsufficientPermissionsError,
     InvalidCredentialsError,
     InvalidTokenError,
     TokenExpiredError,
@@ -927,6 +928,140 @@ class TestLogout:
         assert count >= 1
 
 
+class TestSessionManagement:
+    async def test_list_sessions_empty(
+        self, auth_manager: AsyncAuthManager, verified_user: dict
+    ):
+        assert await auth_manager.list_sessions(verified_user["id"]) == []
+
+    async def test_list_sessions_after_logins(
+        self, auth_manager: AsyncAuthManager, verified_user: dict
+    ):
+        await auth_manager.login(
+            email="verified@example.com",
+            password="AuthP@ss12345!",
+        )
+        await auth_manager.login(
+            email="verified@example.com",
+            password="AuthP@ss12345!",
+        )
+        sessions = await auth_manager.list_sessions(verified_user["id"])
+        assert len(sessions) == 2
+        assert {"id", "created_at", "expires_at"} <= set(sessions[0])
+
+    async def test_list_sessions_excludes_revoked(
+        self, auth_manager: AsyncAuthManager, verified_user: dict
+    ):
+        login1 = await auth_manager.login(
+            email="verified@example.com",
+            password="AuthP@ss12345!",
+        )
+        login2 = await auth_manager.login(
+            email="verified@example.com",
+            password="AuthP@ss12345!",
+        )
+        await auth_manager.logout(
+            user_id=verified_user["id"],
+            refresh_token=login1["refresh_token"],
+        )
+        sessions = await auth_manager.list_sessions(verified_user["id"])
+        assert len(sessions) == 1
+        login2_token = await auth_manager.storage.get_refresh_token_by_hash(
+            hash_token(login2["refresh_token"])
+        )
+        assert login2_token is not None
+        assert sessions[0]["id"] == login2_token["id"]
+
+    async def test_revoke_session_by_id(
+        self, auth_manager: AsyncAuthManager, verified_user: dict
+    ):
+        login = await auth_manager.login(
+            email="verified@example.com",
+            password="AuthP@ss12345!",
+        )
+        token_id = (
+            await auth_manager.storage.list_refresh_tokens_for_user(verified_user["id"])
+        )[0]["id"]
+        assert await auth_manager.revoke_session_by_id(verified_user["id"], token_id)
+        assert await auth_manager.list_sessions(verified_user["id"]) == []
+        with pytest.raises(InvalidTokenError, match="revoked"):
+            await auth_manager.refresh_access_token(login["refresh_token"])
+
+    async def test_revoke_session_by_id_unauthorized(
+        self, auth_manager: AsyncAuthManager, verified_user: dict
+    ):
+        await auth_manager.login(
+            email="verified@example.com",
+            password="AuthP@ss12345!",
+        )
+        token_id = (
+            await auth_manager.storage.list_refresh_tokens_for_user(verified_user["id"])
+        )[0]["id"]
+        # Different user cannot revoke
+        assert not await auth_manager.revoke_session_by_id(99999, token_id)
+        assert len(await auth_manager.list_sessions(verified_user["id"])) == 1
+
+    async def test_revoke_session_by_id_nonexistent(
+        self, auth_manager: AsyncAuthManager
+    ):
+        assert not await auth_manager.revoke_session_by_id(1, 99999)
+
+    async def test_revoke_all_sessions_for_user(
+        self, auth_manager: AsyncAuthManager, verified_user: dict
+    ):
+        await auth_manager.login(
+            email="verified@example.com",
+            password="AuthP@ss12345!",
+        )
+        await auth_manager.login(
+            email="verified@example.com",
+            password="AuthP@ss12345!",
+        )
+        count = await auth_manager.revoke_all_sessions_for_user(verified_user["id"])
+        assert count == 2
+        assert await auth_manager.list_sessions(verified_user["id"]) == []
+
+    async def test_revoke_all_sessions_excluding_one(
+        self, auth_manager: AsyncAuthManager, verified_user: dict
+    ):
+        await auth_manager.login(
+            email="verified@example.com",
+            password="AuthP@ss12345!",
+        )
+        login2 = await auth_manager.login(
+            email="verified@example.com",
+            password="AuthP@ss12345!",
+        )
+        login2_token = await auth_manager.storage.get_refresh_token_by_hash(
+            hash_token(login2["refresh_token"])
+        )
+        assert login2_token is not None
+        keep_id = login2_token["id"]
+        count = await auth_manager.revoke_all_sessions_for_user(
+            verified_user["id"], exclude_token_id=keep_id
+        )
+        assert count == 1
+        remaining = await auth_manager.list_sessions(verified_user["id"])
+        assert len(remaining) == 1
+        assert remaining[0]["id"] == keep_id
+
+
+class TestAsyncContextManager:
+    async def test_async_context_manager_closes_storage(
+        self, test_config: AuthConfig, mem_db: AsyncSQLiteStorage
+    ):
+        async with AsyncAuthManager(test_config, mem_db) as auth:
+            user = await auth.register(
+                name="CM User",
+                email="cm@example.com",
+                password="SecureP@ss1234!",
+                auto_verify=True,
+            )
+            assert (await auth.get_user(user["id"]))["email"] == "cm@example.com"
+        # Storage connection should be closed after exiting the context
+        assert mem_db._conn is None
+
+
 # ── User Management ─────────────────────────────────────────
 
 
@@ -1096,6 +1231,35 @@ class TestRBAC:
     ):
         assert await auth_manager.get_user_permissions(verified_user["id"]) == []
         assert not await auth_manager.has_permission(verified_user["id"], "anything")
+
+
+class TestAsyncRequirePermission:
+    async def test_require_permission_passes(
+        self, auth_manager: AsyncAuthManager, verified_user: dict
+    ):
+        role = await auth_manager.create_role("viewer")
+        perm = await auth_manager.create_permission("content:read")
+        await auth_manager.assign_permission_to_role(role["id"], perm["id"])
+        await auth_manager.assign_role_to_user(verified_user["id"], role["id"])
+
+        await auth_manager.require_permission(verified_user["id"], "content:read")
+
+    async def test_require_permission_denied(
+        self, auth_manager: AsyncAuthManager, verified_user: dict
+    ):
+        role = await auth_manager.create_role("viewer")
+        perm = await auth_manager.create_permission("content:read")
+        await auth_manager.assign_permission_to_role(role["id"], perm["id"])
+        await auth_manager.assign_role_to_user(verified_user["id"], role["id"])
+
+        with pytest.raises(InsufficientPermissionsError, match="content:write"):
+            await auth_manager.require_permission(verified_user["id"], "content:write")
+
+    async def test_require_permission_no_permissions(
+        self, auth_manager: AsyncAuthManager, verified_user: dict
+    ):
+        with pytest.raises(InsufficientPermissionsError):
+            await auth_manager.require_permission(verified_user["id"], "anything")
 
 
 # ── API Keys ────────────────────────────────────────────────
@@ -1756,6 +1920,50 @@ class TestAsyncMFACodeFormats:
         code = pyotp.TOTP(secret).now()
         assert len(code) == 6
         assert code.isdigit()
+
+
+class TestAsyncVerifyRecoveryCode:
+    @pytest.fixture()
+    async def mfa_enabled_user(self, auth_manager: AsyncAuthManager) -> dict:
+        user = await auth_manager.register(
+            name="MFA User",
+            email="mfa@example.com",
+            password="SecureP@ss1234!",
+            auto_verify=True,
+        )
+        setup = await auth_manager.setup_mfa(user["id"])
+        code = _make_totp_code(setup["secret"])
+        result = await auth_manager.verify_and_enable_mfa(user["id"], code)
+        return {**user, "recovery_codes": result["recovery_codes"]}
+
+    async def test_verify_valid_recovery_code(
+        self, auth_manager: AsyncAuthManager, mfa_enabled_user: dict
+    ):
+        code = mfa_enabled_user["recovery_codes"][0]
+        assert await auth_manager.verify_mfa_recovery_code(mfa_enabled_user["id"], code)
+
+    async def test_verify_recovery_code_single_use(
+        self, auth_manager: AsyncAuthManager, mfa_enabled_user: dict
+    ):
+        code = mfa_enabled_user["recovery_codes"][0]
+        assert await auth_manager.verify_mfa_recovery_code(mfa_enabled_user["id"], code)
+        assert not await auth_manager.verify_mfa_recovery_code(
+            mfa_enabled_user["id"], code
+        )
+
+    async def test_verify_invalid_recovery_code(
+        self, auth_manager: AsyncAuthManager, mfa_enabled_user: dict
+    ):
+        assert not await auth_manager.verify_mfa_recovery_code(
+            mfa_enabled_user["id"], "AAAA-AAAA-AAAA"
+        )
+
+    async def test_verify_empty_code(
+        self, auth_manager: AsyncAuthManager, mfa_enabled_user: dict
+    ):
+        assert not await auth_manager.verify_mfa_recovery_code(
+            mfa_enabled_user["id"], ""
+        )
 
 
 # ── Edge Cases (Async) ──────────────────────────────────────
