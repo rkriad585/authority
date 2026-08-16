@@ -43,3 +43,18 @@ Thumbs.db
 .env.*
 !*.pem
 !*.key
+
+# Docs, assets, and tooling not needed in the image
+docs/
+logo/
+Screenshots/
+tools/
+.github/
+mkdocs.yml
+CHANGELOG.md
+CODE_OF_CONDUCT.md
+CONTRIBUTORS
+ACCESSIBILITY.md
+SECURITY.md
+CONTRIBUTING.md
+

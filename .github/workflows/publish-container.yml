@@ -1,0 +1,81 @@
+name: Publish container
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: publish-container-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check version file
+        run: |
+          test -s .version \
+            || { echo "::error::Missing or empty .version file in repository root"; exit 1; }
+          echo "VERSION=$(cat .version)" >> "$GITHUB_ENV"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/rkriad585/authority
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=sha
+          labels: |
+            org.opencontainers.image.title=Authority Example App
+            org.opencontainers.image.description=Framework-agnostic Python authentication library (JWT, MFA, WebAuthn, RBAC, API keys) running the FastAPI example app
+            org.opencontainers.image.vendor=rkriad585
+            org.opencontainers.image.licenses=MIT
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ env.VERSION }}
+            SOURCE_COMMIT=${{ github.sha }}
+            SOURCE_REPOSITORY=https://github.com/rkriad585/authority
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Workflow summary
+        run: |
+          {
+            echo "## Container published"
+            echo ""
+            echo "- **Registry:** GitHub Container Registry (\`ghcr.io\`)"
+            echo "- **Image:** \`ghcr.io/rkriad585/authority\`"
+            echo "- **Project version:** \`${{ env.VERSION }}\`"
+            echo "- **Tags:**"
+            for tag in ${{ steps.meta.outputs.tags }}; do
+              echo "  - \`$tag\`"
+            done
+            echo "- **Ref:** \`${{ github.ref }}\` at \`${{ github.sha }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
