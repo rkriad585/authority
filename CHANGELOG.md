@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-16
+
 ### Added
 
 - Flask integration helpers (`authority.flask`) with module-level and
@@ -24,6 +26,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optional extras for `flask`, `django`, `starlette`, and `quart`
 - Fully working example apps under `examples/apps/` for FastAPI, Flask, Django,
   Starlette, and the raw ASGI/WSGI middleware
+- Per-app READMEs under `examples/apps/` and an examples index
+- MkDocs documentation site (`docs/`) with per-topic pages (getting started,
+  usage, configuration, API reference, architecture, deployment, FAQ,
+  troubleshooting)
+- Project logo (`logo/logo.svg`) and generated screenshots (`Screenshots/`)
+- Documentation deployment workflow (`.github/workflows/docs.yml`) publishing
+  to GitHub Pages
+- `docs` extra (`mkdocs`, `mkdocs-material`, `pymdown-extensions`)
+- PyPI project URLs for the documentation site and author website
+- Standard project files: `CODE_OF_CONDUCT.md`, `CODEOWNERS`, `CONTRIBUTORS`,
+  `ACCESSIBILITY.md`, `Dockerfile`, `.editorconfig`, `.gitattributes`,
+  `.dockerignore`, and `.env.example`
 
 ## [0.1.0] - 2026-07-23
 
