@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard — {{ app_name }}</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    background: #f5f6fa; color: #1f2430; line-height: 1.5;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0f1117; color: #e8eaf0; }
+    .card { background: #1a1d27; border-color: #2a2e3d; }
+    code { background: #232836; }
+  }
+  header {
+    padding: 1.5rem 1rem; text-align: center;
+    background: linear-gradient(135deg, #3f51b5, #5c6bc0); color: #fff;
+  }
+  header h1 { margin: 0; font-size: 1.4rem; }
+  main { max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+  .card {
+    background: #fff; border: 1px solid #e3e6ef; border-radius: 10px;
+    padding: 1.25rem 1.5rem; margin-bottom: 1.25rem;
+  }
+  .card h2 { margin-top: 0; font-size: 1.05rem; }
+  dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 0.5rem 1rem; }
+  dt { font-weight: 600; color: #64748b; }
+  @media (prefers-color-scheme: dark) { dt { color: #94a3b8; } }
+  dd { margin: 0; }
+  code { background: #f0f2f8; border-radius: 4px; padding: 0.1rem 0.35rem; font-size: 0.9em; }
+  ul { margin: 0.5rem 0; padding-left: 1.25rem; }
+  li { margin: 0.25rem 0; }
+  .actions { display: flex; gap: 0.75rem; margin-top: 0.25rem; }
+  .btn {
+    display: inline-block; padding: 0.6rem 1.1rem; border-radius: 8px;
+    border: 0; text-decoration: none; font-weight: 600; cursor: pointer;
+    background: #3f51b5; color: #fff; font-size: 1rem;
+  }
+  .btn:hover { opacity: 0.9; }
+  .btn.secondary { background: #eceffa; color: #3f51b5; }
+  @media (prefers-color-scheme: dark) {
+    .btn.secondary { background: #2a2e3d; color: #c5cae9; }
+  }
+  .muted { color: #64748b; font-size: 0.9rem; }
+  @media (prefers-color-scheme: dark) { .muted { color: #94a3b8; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Dashboard</h1>
+  <p>Signed in to {{ app_name }}</p>
+</header>
+<main>
+  <section class="card">
+    <h2>Your account</h2>
+    <dl>
+      <dt>User ID</dt><dd>{{ user.id }}</dd>
+      <dt>Name</dt><dd>{{ user.name }}</dd>
+      <dt>Email</dt><dd>{{ user.email }}</dd>
+      <dt>Verified</dt><dd>{{ user.is_email_verified }}</dd>
+    </dl>
+  </section>
+  <section class="card">
+    <h2>Permissions</h2>
+    <ul>
+      {% for perm in permissions %}
+      <li><code>{{ perm }}</code></li>
+      {% else %}
+      <li class="muted">No permissions assigned yet.</li>
+      {% endfor %}
+    </ul>
+  </section>
+  <div class="actions">
+    <a class="btn" href="/admin">Admin page (demo)</a>
+    <form method="post" action="/logout" style="margin:0">
+      <button class="btn secondary" type="submit">Log out</button>
+    </form>
+  </div>
+</main>
+</body>
+</html>

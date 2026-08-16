@@ -92,7 +92,7 @@ async def get_current_user(
         ) from None
 
 
-async def require_permission(permission_code: str):
+def require_permission(permission_code: str):
     """FastAPI dependency factory that checks if the current user has a specific permission.
 
     Usage:
@@ -146,7 +146,7 @@ async def require_permission(permission_code: str):
     return _check_permission
 
 
-async def require_role(role_name: str):
+def require_role(role_name: str):
     """FastAPI dependency factory that checks if the current user has a specific role.
 
     Usage:

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ app_name }}</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    background: #f5f6fa; color: #1f2430; line-height: 1.5;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0f1117; color: #e8eaf0; }
+    .card { background: #1a1d27; border-color: #2a2e3d; }
+    code { background: #232836; }
+  }
+  header {
+    padding: 2rem 1rem; text-align: center;
+    background: linear-gradient(135deg, #3f51b5, #5c6bc0); color: #fff;
+  }
+  header h1 { margin: 0; font-size: 1.6rem; }
+  header p { margin: 0.4rem 0 0; opacity: 0.9; }
+  main { max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+  .card {
+    background: #fff; border: 1px solid #e3e6ef; border-radius: 10px;
+    padding: 1.25rem 1.5rem; margin-bottom: 1.25rem;
+  }
+  .card h2 { margin-top: 0; font-size: 1.05rem; }
+  code { background: #f0f2f8; border-radius: 4px; padding: 0.1rem 0.35rem; font-size: 0.9em; }
+  ul { margin: 0.5rem 0; padding-left: 1.25rem; }
+  li { margin: 0.25rem 0; }
+  .actions { display: flex; gap: 0.75rem; margin-top: 0.25rem; }
+  .btn {
+    display: inline-block; padding: 0.6rem 1.1rem; border-radius: 8px;
+    text-decoration: none; font-weight: 600; background: #3f51b5; color: #fff;
+  }
+  .btn:hover { opacity: 0.9; }
+  .btn.secondary { background: #eceffa; color: #3f51b5; }
+  @media (prefers-color-scheme: dark) {
+    .btn.secondary { background: #2a2e3d; color: #c5cae9; }
+  }
+  form label { display: block; margin-bottom: 0.25rem; font-weight: 600; }
+  form input {
+    width: 100%; padding: 0.6rem 0.75rem; margin-bottom: 1rem;
+    border: 1px solid #c9cede; border-radius: 8px; font-size: 1rem;
+    background: #fff; color: #1f2430;
+  }
+  @media (prefers-color-scheme: dark) {
+    form input { background: #232836; color: #e8eaf0; border-color: #2a2e3d; }
+  }
+  .error { color: #c62828; margin-bottom: 1rem; min-height: 1.2em; font-size: 0.9rem; }
+  @media (prefers-color-scheme: dark) { .error { color: #ef9a9a; } }
+  .muted { color: #64748b; font-size: 0.9rem; }
+  @media (prefers-color-scheme: dark) { .muted { color: #94a3b8; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>{{ app_name }}</h1>
+  <p>A runnable <code>authority-auth</code> example</p>
+</header>
+<main>
+  <section class="card">
+    <h2>Web pages</h2>
+    <div class="actions">
+      <a class="btn" href="/login">Log in</a>
+      <a class="btn secondary" href="/register">Register</a>
+    </div>
+  </section>
+  <section class="card">
+    <h2>API endpoints</h2>
+    <ul>
+      {% for ep in endpoints %}
+      <li><code>{{ ep }}</code></li>
+      {% endfor %}
+    </ul>
+  </section>
+  <section class="card">
+    <h2>Demo account</h2>
+    <p><strong>email:</strong> <code>demo@example.com</code></p>
+    <p><strong>password:</strong> <code>SecureP@ss1234!</code></p>
+  </section>
+  {% if docs_url %}
+  <p class="muted">Interactive API docs: <a href="{{ docs_url }}">{{ docs_url }}</a></p>
+  {% endif %}
+</main>
+</body>
+</html>

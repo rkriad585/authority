@@ -26,6 +26,18 @@ DEMO_ROLE = "admin"
 DEMO_PERMISSION = "admin.access"
 
 
+def app_info(name: str, endpoints: list[str], extra: dict | None = None) -> dict:
+    """Build the JSON payload served at the app's root (/) endpoint."""
+    info: dict = {
+        "app": name,
+        "endpoints": endpoints,
+        "demo_account": {"email": DEMO_EMAIL, "password": DEMO_PASSWORD},
+    }
+    if extra:
+        info.update(extra)
+    return info
+
+
 def default_config(db_path: str) -> AuthConfig:
     """Build an AuthConfig for local development.
 

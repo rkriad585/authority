@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Example apps (FastAPI, Flask, Django, Starlette) are now real web apps:
+  server-rendered HTML pages at `/`, `/login`, `/register`, and `/dashboard`
+  (rendered from the shared `examples/apps/_templates/` template set) alongside
+  the existing JSON API, plus a `POST /logout` route. Web login sets an
+  `HttpOnly` `access_token` cookie; `/dashboard` verifies it server-side.
+- Django example app now renders its pages through Django's Jinja2 template
+  backend and merges the GET page / POST JSON handlers per route.
+- Protected routes (`/me`, `/admin`) in the example apps now accept a token via
+  the `Authorization: Bearer` header or the `access_token` cookie: a small
+  per-framework middleware promotes the cookie to the header when no header is
+  sent, so the header-based decorators/dependencies work in the browser.
+
+### Fixed
+
+- `authority.fastapi.require_permission` / `require_role` were declared
+  `async def`, which made `Depends(require_permission("..."))` receive a
+  coroutine instead of a dependency. They are now regular factory functions, so
+  the documented `Depends(...)` pattern works directly.
+- Example apps (FastAPI, Flask, Django, Starlette) now serve app info, demo
+  credentials, and their endpoint list at `/` instead of returning 404.
+
 ## [0.2.0] - 2026-08-16
 
 ### Added

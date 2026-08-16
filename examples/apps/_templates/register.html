@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Register — {{ app_name }}</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    background: #f5f6fa; color: #1f2430; line-height: 1.5;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0f1117; color: #e8eaf0; }
+    .card { background: #1a1d27; border-color: #2a2e3d; }
+  }
+  main { max-width: 420px; margin: 4rem auto; padding: 0 1rem; }
+  .card {
+    background: #fff; border: 1px solid #e3e6ef; border-radius: 10px; padding: 1.5rem;
+  }
+  .card h1 { margin-top: 0; font-size: 1.3rem; }
+  form label { display: block; margin-bottom: 0.25rem; font-weight: 600; }
+  form input {
+    width: 100%; padding: 0.6rem 0.75rem; margin-bottom: 1rem;
+    border: 1px solid #c9cede; border-radius: 8px; font-size: 1rem;
+    background: #fff; color: #1f2430;
+  }
+  @media (prefers-color-scheme: dark) {
+    form input { background: #232836; color: #e8eaf0; border-color: #2a2e3d; }
+  }
+  button {
+    width: 100%; padding: 0.65rem; border: 0; border-radius: 8px;
+    background: #3f51b5; color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer;
+  }
+  button:hover { opacity: 0.9; }
+  .error { color: #c62828; margin-bottom: 1rem; min-height: 1.2em; font-size: 0.9rem; }
+  @media (prefers-color-scheme: dark) { .error { color: #ef9a9a; } }
+  .muted { color: #64748b; font-size: 0.9rem; text-align: center; }
+  @media (prefers-color-scheme: dark) { .muted { color: #94a3b8; } }
+  .muted a { color: #3f51b5; }
+  @media (prefers-color-scheme: dark) { .muted a { color: #9fa8da; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="card">
+    <h1>Create an account</h1>
+    <div id="error" class="error"></div>
+    <form id="register-form">
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" autocomplete="name" required>
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" autocomplete="email" required>
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" autocomplete="new-password" required>
+      <button type="submit">Create account</button>
+    </form>
+  </div>
+  <p class="muted">Already registered? <a href="/login">Log in</a></p>
+</main>
+<script>
+  const form = document.getElementById('register-form');
+  const error = document.getElementById('error');
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    try {
+      const res = await fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password }),
+      });
+      if (res.ok) {
+        window.location.href = '/login';
+      } else {
+        const data = await res.json().catch(() => ({}));
+        error.textContent = data.error || 'Registration failed';
+      }
+    } catch (err) {
+      error.textContent = 'Network error';
+    }
+  });
+</script>
+</body>
+</html>

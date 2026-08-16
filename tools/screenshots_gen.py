@@ -471,7 +471,6 @@ auth = AuthManager(config, storage, event_bus=bus)""",
         "filename": "fastapi.png",
         "title": "FastAPI integration",
         "source": """\
-import asyncio
 from fastapi import Depends, FastAPI
 from authority import AsyncAuthManager, AuthConfig
 from authority.fastapi import get_current_user, init_auth, require_permission
@@ -484,14 +483,12 @@ manager = AsyncAuthManager(
 )
 init_auth(manager)
 
-require_admin = asyncio.run(require_permission("admin.access"))
-
 @app.get("/me")
 async def me(payload: dict = Depends(get_current_user)):
     return {"user_id": payload["user_id"]}
 
 @app.get("/admin")
-async def admin(_: dict = Depends(require_admin)):
+async def admin(_: dict = Depends(require_permission("admin.access"))):
     return {"message": "Welcome, admin!"}""",
     },
     {

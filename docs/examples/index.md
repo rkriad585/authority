@@ -2,8 +2,10 @@
 
 The repository ships six fully working example web applications under
 [`examples/apps/`](https://github.com/rkriad585/authority/tree/main/examples/apps).
-Each app is a real, runnable server that demonstrates one integration and
-exposes the same JSON endpoints.
+Each app is a real, runnable server that demonstrates one integration. The four
+framework apps (FastAPI, Flask, Django, Starlette) share one template set in
+[`examples/apps/_templates/`](https://github.com/rkriad585/authority/tree/main/examples/apps/_templates)
+and serve the same HTML pages plus the JSON endpoints below.
 
 | App | Folder | Stack | Run | URL |
 |---|---|---|---|---|
@@ -14,14 +16,28 @@ exposes the same JSON endpoints.
 | [Starlette](starlette.md) | [`starlette_app/`](https://github.com/rkriad585/authority/tree/main/examples/apps/starlette_app) | Starlette + `AsyncSQLiteStorage` (async) | `uvicorn examples.apps.starlette_app.app:app` | http://127.0.0.1:8000 |
 | [ASGI middleware](asgi.md) | [`asgi_app/`](https://github.com/rkriad585/authority/tree/main/examples/apps/asgi_app) | Bare ASGI + `AuthorityASGIMiddleware` (async) | `uvicorn examples.apps.asgi_app.app:wrapped_app` | http://127.0.0.1:8000 |
 
+## Web pages (framework apps)
+
+The FastAPI, Flask, Django, and Starlette apps serve these pages from the
+shared [`examples/apps/_templates/`](https://github.com/rkriad585/authority/tree/main/examples/apps/_templates)
+template set. The bare WSGI/ASGI middleware apps are JSON-only.
+
+| Page | Description |
+|---|---|
+| `/` | Landing page linking to login/register and listing the API endpoints |
+| `/login` | Login form; POSTs JSON to `/login`, then redirects to `/dashboard` |
+| `/register` | Registration form; POSTs JSON to `/register` |
+| `/dashboard` | Shows the signed-in user and permissions (requires the login cookie) |
+
 ## Common endpoints
 
 | Endpoint | Method | Description |
 |---|---|---|
 | `/register` | POST | Create an account (`name`, `email`, `password` JSON body) |
-| `/login` | POST | Login and receive `access_token` / `refresh_token` |
-| `/me` | GET | Current user, requires `Authorization: Bearer <token>` |
-| `/admin` | GET | Requires the `admin.access` permission |
+| `/login` | POST | Login and receive `access_token` / `refresh_token` (also sets an `HttpOnly` cookie) |
+| `/logout` | POST | Clears the `access_token` cookie and redirects to `/login` |
+| `/me` | GET | Current user, requires a valid token (`Authorization: Bearer` header or `access_token` cookie) |
+| `/admin` | GET | Requires the `admin.access` permission (header or cookie token) |
 
 A demo admin account is seeded on first startup in every app:
 
@@ -40,6 +56,12 @@ curl -X POST http://127.0.0.1:8000/login \
 curl http://127.0.0.1:8000/me \
   -H "Authorization: Bearer <access_token>"
 ```
+
+Web login sets an `HttpOnly` `access_token` cookie; the `/dashboard` page
+verifies that cookie server-side and renders the user. The API routes accept a
+token via the `Authorization: Bearer` header or the `access_token` cookie (the
+example apps promote the cookie to the header when no header is sent). Log out
+via `POST /logout`.
 
 ## Requirements
 

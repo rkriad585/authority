@@ -1,9 +1,10 @@
 # Example Apps
 
 Fully working web applications demonstrating the authority-auth integration
-helpers. Every app lives in its own folder with its own `README.md`, exposes
-the same JSON endpoints, and starts a real web server so you can test
-everything end to end.
+helpers. Every app lives in its own folder with its own `README.md`, starts a
+real web server, and exposes the same JSON endpoints. The four framework apps
+(FastAPI, Flask, Django, Starlette) also share one template set in
+[`_templates/`](_templates/) and serve matching HTML pages.
 
 | App | Folder | Run | URL |
 |---|---|---|---|
@@ -14,14 +15,28 @@ everything end to end.
 | Starlette | [`starlette_app/`](starlette_app/) | `uvicorn examples.apps.starlette_app.app:app` | http://127.0.0.1:8000 |
 | ASGI middleware | [`asgi_app/`](asgi_app/) | `uvicorn examples.apps.asgi_app.app:wrapped_app` | http://127.0.0.1:8000 |
 
+## Web pages (framework apps)
+
+The FastAPI, Flask, Django, and Starlette apps serve these pages from the
+shared [`_templates/`](_templates/) template set. The bare WSGI/ASGI middleware
+apps are JSON-only.
+
+| Page | Description |
+|---|---|
+| `/` | Landing page linking to login/register and listing the API endpoints |
+| `/login` | Login form; POSTs JSON to `/login`, then redirects to `/dashboard` |
+| `/register` | Registration form; POSTs JSON to `/register` |
+| `/dashboard` | Shows the signed-in user and permissions (requires the login cookie) |
+
 ## Common endpoints
 
 | Endpoint | Method | Description |
 |---|---|---|
 | `/register` | POST | Create an account (`name`, `email`, `password` JSON body) |
-| `/login` | POST | Login and receive `access_token` / `refresh_token` |
-| `/me` | GET | Current user, requires `Authorization: Bearer <token>` |
-| `/admin` | GET | Requires the `admin.access` permission |
+| `/login` | POST | Login and receive `access_token` / `refresh_token` (also sets an `HttpOnly` cookie) |
+| `/logout` | POST | Clears the `access_token` cookie and redirects to `/login` |
+| `/me` | GET | Current user, requires a valid token (`Authorization: Bearer` header or `access_token` cookie) |
+| `/admin` | GET | Requires the `admin.access` permission (header or cookie token) |
 
 A demo admin account is seeded on first startup in every app:
 
@@ -40,6 +55,12 @@ curl -X POST http://127.0.0.1:8000/login \
 curl http://127.0.0.1:8000/me \
   -H "Authorization: Bearer <access_token>"
 ```
+
+Web login sets an `HttpOnly` `access_token` cookie; the `/dashboard` page
+verifies that cookie server-side and renders the user. The API routes accept a
+token via the `Authorization: Bearer` header or the `access_token` cookie (the
+example apps promote the cookie to the header when no header is sent). Log out
+via `POST /logout`.
 
 ## Requirements
 

@@ -186,7 +186,7 @@ class TestRequirePermission:
         token = _make_token(
             auth_manager.config.jwt_secret_key, sub=str(registered_user["id"])
         )
-        dep = await require_permission("items.delete")
+        dep = require_permission("items.delete")
         result = await dep(self._creds(token))
         assert result["user_id"] == registered_user["id"]
 
@@ -197,14 +197,14 @@ class TestRequirePermission:
         token = _make_token(
             auth_manager.config.jwt_secret_key, sub=str(registered_user["id"])
         )
-        dep = await require_permission("items.delete")
+        dep = require_permission("items.delete")
         with pytest.raises(HTTPException) as exc_info:
             await dep(self._creds(token))
         assert exc_info.value.status_code == 403
         assert "items.delete" in exc_info.value.detail
 
     async def test_expired_token(self, auth_manager, registered_user):
-        dep = await require_permission("items.delete")
+        dep = require_permission("items.delete")
         token = _make_expired_token(
             auth_manager.config.jwt_secret_key, sub=str(registered_user["id"])
         )
@@ -213,7 +213,7 @@ class TestRequirePermission:
         assert exc_info.value.status_code == 401
 
     async def test_invalid_token(self, auth_manager):
-        dep = await require_permission("items.delete")
+        dep = require_permission("items.delete")
         with pytest.raises(HTTPException) as exc_info:
             await dep(self._creds("bad.token.here"))
         assert exc_info.value.status_code == 401
@@ -237,7 +237,7 @@ class TestRequireRole:
         token = _make_token(
             auth_manager.config.jwt_secret_key, sub=str(registered_user["id"])
         )
-        dep = await require_role("admin")
+        dep = require_role("admin")
         result = await dep(self._creds(token))
         assert result["user_id"] == registered_user["id"]
 
@@ -246,14 +246,14 @@ class TestRequireRole:
         token = _make_token(
             auth_manager.config.jwt_secret_key, sub=str(registered_user["id"])
         )
-        dep = await require_role("admin")
+        dep = require_role("admin")
         with pytest.raises(HTTPException) as exc_info:
             await dep(self._creds(token))
         assert exc_info.value.status_code == 403
         assert "admin" in exc_info.value.detail
 
     async def test_expired_token(self, auth_manager, registered_user):
-        dep = await require_role("admin")
+        dep = require_role("admin")
         token = _make_expired_token(
             auth_manager.config.jwt_secret_key, sub=str(registered_user["id"])
         )
@@ -262,7 +262,7 @@ class TestRequireRole:
         assert exc_info.value.status_code == 401
 
     async def test_invalid_token(self, auth_manager):
-        dep = await require_role("admin")
+        dep = require_role("admin")
         with pytest.raises(HTTPException) as exc_info:
             await dep(self._creds("bad.token.here"))
         assert exc_info.value.status_code == 401
