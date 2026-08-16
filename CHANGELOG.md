@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Flask integration helpers (`authority.flask`) with module-level and
+  instance-based (`FlaskAuth`) decorators, Bearer/session token extraction,
+  and `current_user`
+- Django integration (`authority.django`) with the `AuthorityBackend` auth
+  backend, Django-user mirroring, and `login_required` / `require_permission` /
+  `require_role` decorators
+- Starlette integration (`authority.starlette`) with the `StarletteAuth` helper
+  and async decorators
+- Framework-agnostic ASGI middleware (`authority.asgi`) that exposes
+  authentication state on the ASGI scope
+- Framework-agnostic WSGI middleware (`authority.wsgi`) that exposes
+  authentication state on the WSGI environ
+- Optional extras for `flask`, `django`, `starlette`, and `quart`
+- Fully working example apps under `examples/apps/` for FastAPI, Flask, Django,
+  Starlette, and the raw ASGI/WSGI middleware
+
 ## [0.1.0] - 2026-07-23
 
 ### Added

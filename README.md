@@ -28,7 +28,7 @@ HIBP breach checking, and pluggable storage -- all framework-agnostic.
 - **Pluggable Storage** -- Sync and async SQLite backends included; implement `StorageInterface` or `AsyncStorageInterface` for any database
 - **Event Bus** -- Typed lifecycle events (login, MFA, token refresh, RBAC changes, etc.) with sync and async handler support
 - **Audit Logging** -- Append-only audit trail with optional chain hashing for tamper evidence
-- **Framework-Agnostic** -- Works with FastAPI, Flask, Django, or standalone scripts
+- **Framework-Agnostic** -- First-party integrations for FastAPI, Flask, Django, and Starlette, plus generic ASGI/WSGI middleware for everything else
 - **Full Async Support** -- `AsyncAuthManager` with `AsyncSQLiteStorage` for async-first applications
 
 ## Requirements
@@ -231,6 +231,120 @@ async def login(email: str, password: str):
 async def get_me(user: dict = Depends(get_current_user)):
     return {"id": user["id"], "name": user["name"], "email": user["email"]}
 ```
+
+## Framework Integrations
+
+Each integration ships in its own module and requires the matching framework
+extra. Fully working apps for every framework live in
+[`examples/apps/`](examples/apps/).
+
+```bash
+pip install "authority-auth[flask]"    # Flask
+pip install "authority-auth[django]"   # Django
+pip install "authority-auth[starlette]"  # Starlette
+pip install "authority-auth[fastapi]"  # FastAPI
+```
+
+### Flask
+
+```python
+from flask import Flask, jsonify
+from authority import AuthConfig, AuthManager
+from authority.storage.sqlite import SQLiteStorage
+from authority.flask import FlaskAuth
+
+app = Flask(__name__)
+app.secret_key = "app-session-secret"
+
+auth = FlaskAuth(
+    app,
+    AuthManager(
+        AuthConfig(jwt_secret_key="your-secret-key-min-32-chars", fernet_key="your-fernet-key"),
+        SQLiteStorage("auth.db"),
+    ),
+)
+
+@app.route("/me")
+@auth.login_required
+def me():
+    user = auth.current_user()  # full user dict, or None
+    return jsonify({"id": user["id"], "email": user["email"]})
+
+@app.route("/admin")
+@auth.require_permission("admin.access")
+def admin():
+    return "Welcome, admin!"
+```
+
+Tokens are read from the `Authorization: Bearer <token>` header, or from
+`session["access_token"]` for session-based flows. Module-level helpers
+(`init_auth`, `login_required`, `require_permission`, `require_role`,
+`current_user`) are also available.
+
+### Django
+
+```python
+from django.contrib.auth import authenticate
+from django.http import JsonResponse
+from django.urls import path
+from authority.django import get_current_user, init_auth, login_required, require_permission
+
+init_auth(auth_manager)  # an authority.AuthManager
+
+@login_required
+def me(request):
+    user = get_current_user(request)
+    return JsonResponse({"email": user["email"]})
+
+urlpatterns = [path("me", me)]
+```
+
+Add `authority.django.AuthorityBackend` to `AUTHENTICATION_BACKENDS` to
+authenticate Django users with authority credentials, and use
+`authority_user_to_django_user()` to mirror authority users into
+`django.contrib.auth.models.User` (same primary key, unusable password).
+
+### Starlette
+
+```python
+from starlette.applications import Starlette
+from starlette.routing import Route
+from starlette.responses import JSONResponse
+from authority.starlette import StarletteAuth
+
+auth = StarletteAuth(async_manager)  # an authority.AsyncAuthManager
+
+@auth.require_role("admin")
+async def admin(request):
+    return JSONResponse({"message": "Welcome, admin!"})
+
+app = Starlette(routes=[Route("/admin", admin)])
+```
+
+### Generic middleware
+
+For frameworks without a dedicated helper (or for bare applications), use the
+framework-agnostic middleware. Both attach the auth result to the request
+(`scope["authority"]` / `environ["authority"]`) and provide `get_user_state`,
+`is_authenticated`, `user_id_from_scope` / `user_id_from_environ`, and
+`get_current_user` helpers.
+
+```python
+# ASGI (works with Starlette, FastAPI, Quart, bare ASGI apps)
+from authority.asgi import AuthorityASGIMiddleware
+
+app = AuthorityASGIMiddleware(inner_app, async_manager, auth_required=True)
+```
+
+```python
+# WSGI (works with Flask, Django, bare WSGI apps)
+from authority.wsgi import AuthorityWSGIMiddleware
+
+app = AuthorityWSGIMiddleware(inner_app, manager, auth_required=True)
+```
+
+With `auth_required=True` unauthenticated requests are rejected with a 401 JSON
+response before reaching the application.
 
 ## Configuration
 
