@@ -29,7 +29,7 @@ FROM python:3.12-slim AS builder
 WORKDIR /app
 
 # Install dependencies first for better layer caching.
-COPY pyproject.toml README.md ./
+COPY pyproject.toml README.md .version ./
 COPY src ./src
 COPY examples ./examples
 

@@ -9,9 +9,20 @@ theme:
   logo: https://raw.githubusercontent.com/rkriad585/authority/main/logo/logo.svg
   favicon: https://raw.githubusercontent.com/rkriad585/authority/main/logo/logo.svg
   palette:
-    scheme: default
-    primary: indigo
-    accent: indigo
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
   features:
     - navigation.instant
     - navigation.tracking
@@ -58,9 +69,27 @@ nav:
   - Home: index.md
   - Getting Started: getting-started.md
   - Installation: installation.md
-  - Usage: usage.md
+  - Usage:
+      - Overview: usage.md
+      - Sync: sync.md
+      - Async: async.md
   - Configuration: configuration.md
-  - API Reference: api.md
+  - API Reference:
+      - Overview: api.md
+      - AuthManager: auth-manager.md
+      - AsyncAuthManager: async-auth-manager.md
+      - Tokens: tokens.md
+      - Sessions: sessions.md
+      - Multi-Factor Authentication: mfa.md
+      - WebAuthn: webauthn.md
+      - RBAC: rbac.md
+      - API Keys: api-keys.md
+      - Audit Log: audit.md
+      - Events: events.md
+      - Exceptions: exceptions.md
+      - Storage: storage.md
+      - Integrations: integrations.md
+      - Utilities: utils.md
   - Architecture: architecture.md
   - Screenshots: screenshots.md
   - Development: development.md
