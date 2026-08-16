@@ -31,7 +31,12 @@ from starlette.routing import Route
 from starlette.templating import Jinja2Templates
 
 from authority.async_core import AsyncAuthManager
-from authority.exceptions import AuthError, InvalidCredentialsError, UserExistsError
+from authority.exceptions import (
+    AuthError,
+    InvalidCredentialsError,
+    UserExistsError,
+    ValidationError,
+)
 from authority.starlette import StarletteAuth
 from authority.storage.aiosqlite import AsyncSQLiteStorage
 
@@ -125,6 +130,8 @@ async def register(request: Request) -> JSONResponse:
         )
     except UserExistsError:
         return JSONResponse({"error": "Email already registered"}, status_code=409)
+    except ValidationError as exc:
+        return JSONResponse({"error": str(exc)}, status_code=400)
     return JSONResponse({"user_id": user["id"], "email": user["email"]})
 
 

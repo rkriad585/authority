@@ -63,4 +63,4 @@ import authority
 print(authority.__version__)
 ```
 
-You should see the installed version, e.g. `0.2.0`.
+You should see the installed version, e.g. `0.2.5`.

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-08-16
+
 ### Added
 
 - Example apps (FastAPI, Flask, Django, Starlette) are now real web apps:
@@ -29,6 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the documented `Depends(...)` pattern works directly.
 - Example apps (FastAPI, Flask, Django, Starlette) now serve app info, demo
   credentials, and their endpoint list at `/` instead of returning 404.
+- Example apps no longer return HTTP 500 when a weak password is submitted to
+  `POST /register`: password validation failures are caught and reported as
+  `400` with the complexity message instead of an unhandled exception.
 
 ## [0.2.0] - 2026-08-16
 

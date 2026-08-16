@@ -19,7 +19,11 @@ import json
 from typing import Any
 
 from authority.core import AuthManager
-from authority.exceptions import InvalidCredentialsError, UserExistsError
+from authority.exceptions import (
+    InvalidCredentialsError,
+    UserExistsError,
+    ValidationError,
+)
 from authority.storage.sqlite import SQLiteStorage
 from authority.wsgi import (
     AuthorityWSGIMiddleware,
@@ -75,6 +79,10 @@ def application(environ: dict[str, Any], start_response: Any) -> list[bytes]:
         except UserExistsError:
             return _json_response(
                 start_response, STATUS_CONFLICT, {"error": "Email already registered"}
+            )
+        except ValidationError as exc:
+            return _json_response(
+                start_response, STATUS_BAD_REQUEST, {"error": str(exc)}
             )
         return _json_response(
             start_response,

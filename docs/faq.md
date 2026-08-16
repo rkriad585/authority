@@ -64,7 +64,7 @@ on 8000. All seed a demo account `demo@example.com` / `SecureP@ss1234!`.
 
 ## Is this project production-ready?
 
-The current release is version 0.2.0 and the package is classified
+The current release is version 0.2.5 and the package is classified
 `Development Status :: 3 - Alpha`. The API is exercised by a large test suite,
 but expect possible breaking changes before 1.0. See
 [Security](https://github.com/rkriad585/authority/blob/main/SECURITY.md) for the

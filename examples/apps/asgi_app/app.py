@@ -27,7 +27,11 @@ from authority.asgi import (
     user_id_from_scope,
 )
 from authority.async_core import AsyncAuthManager
-from authority.exceptions import InvalidCredentialsError, UserExistsError
+from authority.exceptions import (
+    InvalidCredentialsError,
+    UserExistsError,
+    ValidationError,
+)
 from authority.storage.aiosqlite import AsyncSQLiteStorage
 
 from .._common import default_config, seed_demo_async
@@ -96,6 +100,9 @@ async def app(scope: Any, receive: Any, send: Any) -> None:
             )
         except UserExistsError:
             await _json_response(send, 409, {"error": "Email already registered"})
+            return
+        except ValidationError as exc:
+            await _json_response(send, 400, {"error": str(exc)})
             return
         await _json_response(send, 201, {"user_id": user["id"], "email": user["email"]})
         return

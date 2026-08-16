@@ -90,6 +90,7 @@ from authority.exceptions import (  # noqa: E402
     AuthError,
     InvalidCredentialsError,
     UserExistsError,
+    ValidationError,
 )
 from authority.storage.sqlite import SQLiteStorage  # noqa: E402
 
@@ -186,6 +187,8 @@ def register(request):
         )
     except UserExistsError:
         return JsonResponse({"error": "Email already registered"}, status=409)
+    except ValidationError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
     return JsonResponse({"user_id": user["id"], "email": user["email"]})
 
 

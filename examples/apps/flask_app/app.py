@@ -22,7 +22,12 @@ from pathlib import Path
 from flask import Flask, jsonify, redirect, render_template, request, url_for
 
 from authority.core import AuthManager
-from authority.exceptions import AuthError, InvalidCredentialsError, UserExistsError
+from authority.exceptions import (
+    AuthError,
+    InvalidCredentialsError,
+    UserExistsError,
+    ValidationError,
+)
 from authority.flask import FlaskAuth, current_user, init_auth
 from authority.storage.sqlite import SQLiteStorage
 
@@ -116,6 +121,8 @@ def register():
         )
     except UserExistsError:
         return jsonify({"error": "Email already registered"}), 409
+    except ValidationError as exc:
+        return jsonify({"error": str(exc)}), 400
     return jsonify({"user_id": user["id"], "email": user["email"]})
 
 
